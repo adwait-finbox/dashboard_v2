@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Migration Tool</title>
+    <link rel="icon" type="image/x-icon" href="migration.ico">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 800px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        select, button, input {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .token {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Platform Migration Tool</h2>
+        <form id="migrationForm">
+            <label for="envDropdown">Select Env:</label>
+            <select id="envDropdown" name="env">
+                <option value="">Select Environment</option>
+                <option value="Prod">Prod</option>
+                <option value="UAT1">UAT1</option>
+                <option value="UAT2">UAT2</option>
+                <option value="UAT3">UAT3</option>
+                <option value="UAT4">UAT4</option>
+                <option value="UAT5">UAT5</option>
+                <option value="UAT6">UAT6</option>
+                <option value="UAT7">UAT7</option>
+                <option value="UAT8">UAT8</option>
+                <option value="UAT9">UAT9</option>
+                <option value="UAT10">UAT10</option>
+                <option value="UAT11">UAT11</option>
+                <option value="UAT12">UAT12</option>
+                <option value="DEV1">DEV1</option>
+                <option value="DEV2">DEV2</option>
+                <option value="DEV3">DEV3</option>
+                <option value="DEV4">DEV4</option>
+                <option value="DEV5">DEV5</option>
+                <option value="DEV6">DEV6</option>
+                <option value="DEV7">DEV7</option>
+                <option value="DEV8">DEV8</option>
+                <option value="DEV9">DEV9</option>
+                <option value="DEV10">DEV10</option>
+                <option value="DEV11">DEV11</option>
+            </select>
+
+            <label for="organizationDropdown">Select Organization:</label>
+            <input type="text" id="orgSearchInput" placeholder="Search Organization">
+            <select id="organizationDropdown" name="organization">
+               
+            </select>
+
+            <label for="groupDropdown">Select Group:</label>
+            <input type="text" id="groupSearchInput" placeholder="Search Group">
+            <select id="groupDropdown" name="group">
+               
+            </select>
+
+            <label for="pageDropdown">Select Page:</label>
+            <input type="text" id="pageSearchInput" placeholder="Search Page">
+            <select id="pageDropdown" name="page">
+                
+            </select>
+
+            <label for="apiInput">Enter API:</label>
+            <input type="text" id="apiInput" placeholder="Enter API">
+
+            <button type="button" onclick="runMigration()" id="runMigrationBtn">Run Migration</button>
+
+            <div id="tokenDisplay" class="token" style="display: none;"></div>
+            <div id="organizationIDDisplay" class="token" style="display: none;"></div>
+        </form>
+    </div>
+
+    <script>
+        let envDropdown;
+        let orgDropdown;
+        let groupDropdown;
+        let pageDropdown;
+        let tokenDisplay;
+        let orgIDDisplay;
+        let authToken = '';
+        let baseUrl = '';
+
+        function runMigration() {
+    const selectedEnv = envDropdown.value;
+    const selectedOrgID = orgDropdown.value;
+    const selectedGroup = groupDropdown.value;
+    const selectedPage = pageDropdown.value;
+    const selectedAPI = document.getElementById('apiInput').value;
+
+    if (!selectedEnv || !selectedOrgID || !selectedGroup || !selectedPage || !selectedAPI) {
+        console.error('Please fill out all required fields before running migration.');
+        return;
+    }
+
+    const baseUrls = {
+        Prod: 'https://lendingapis.finbox.in',
+        UAT1: 'https://lendinguat.finbox.in',
+        UAT2: 'https://lendinguat2.finbox.in',
+        UAT3: 'https://lendinguat3.finbox.in',
+        UAT4: 'https://lendinguat4.finbox.in',
+        UAT5: 'https://lendinguat5.finbox.in',
+        UAT6: 'https://lendinguat6.finbox.in',
+        UAT7: 'https://lendinguat7.finbox.in',
+        UAT8: 'https://lendinguat8.finbox.in',
+        UAT9: 'https://lendinguat9.finbox.in',
+        UAT10: 'https://lendinguat10.finbox.in',
+        UAT11: 'https://lendinguat11.finbox.in',
+        UAT12: 'https://lendinguat12.finbox.in',
+        DEV1: 'https://lendingdev.finbox.in',
+        DEV2: 'https://lendingdev2.finbox.in',
+        DEV3: 'https://lendingdev3.finbox.in',
+        DEV4: 'https://lendingdev4.finbox.in',
+        DEV5: 'https://lendingdev5.finbox.in',
+        DEV6: 'https://lendingdev6.finbox.in',
+        DEV7: 'https://lendingdev7.finbox.in',
+        DEV8: 'https://lendingdev8.finbox.in',
+        DEV9: 'https://lendingdev9.finbox.in',
+        DEV10: 'https://lendingdev10.finbox.in',
+        DEV11: 'https://lendingdev11.finbox.in'
+    };
+
+    const baseUrl = baseUrls[selectedEnv];
+
+    if (!baseUrl) {
+        console.error('Base URL not found for the selected environment');
+        return;
+    }
+
+    fetch(`${baseUrl}/v1/masterDashboard/casbinMigration`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'token': authToken,
+            'page-header': 'Internal Page'
+        },
+        body: JSON.stringify({
+            "organizationID": selectedOrgID,
+            "groupName": selectedGroup,
+            "pageName": selectedPage,
+            "apiName": selectedAPI
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status) {
+            
+            console.log('Migration API response:', data);
+            
+            document.getElementById('runMigrationBtn').innerText = 'Casbin Migration Run Successfully';
+        } else {
+            console.error('Migration API error:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Migration API error:', error);
+    });
+}
+
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            envDropdown = document.getElementById('envDropdown');
+            orgDropdown = document.getElementById('organizationDropdown');
+            groupDropdown = document.getElementById('groupDropdown');
+            pageDropdown = document.getElementById('pageDropdown');
+            tokenDisplay = document.getElementById('tokenDisplay');
+            orgIDDisplay = document.getElementById('organizationIDDisplay');
+            authToken = '';
+            baseUrl = '';
+
+            function filterDropdown(select, input) {
+                const options = select.querySelectorAll('option');
+                const searchTerm = input.value.toUpperCase();
+
+                options.forEach(option => {
+                    const text = option.textContent.toUpperCase();
+                    if (text.includes(searchTerm)) {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            }
+
+            document.getElementById('orgSearchInput').addEventListener('input', function () {
+                filterDropdown(orgDropdown, this);
+            });
+
+            document.getElementById('groupSearchInput').addEventListener('input', function () {
+                filterDropdown(groupDropdown, this);
+            });
+
+            document.getElementById('pageSearchInput').addEventListener('input', function () {
+                filterDropdown(pageDropdown, this);
+            });
+
+            envDropdown.addEventListener('change', function() {
+                const selectedEnv = envDropdown.value;
+
+                const baseUrls = {
+                    Prod: 'https://lendingapis.finbox.in',
+                    UAT1: 'https://lendinguat.finbox.in',
+                    UAT2: 'https://lendinguat2.finbox.in',
+                    UAT3: 'https://lendinguat3.finbox.in',
+                    UAT4: 'https://lendinguat4.finbox.in',
+                    UAT5: 'https://lendinguat5.finbox.in',
+                    UAT6: 'https://lendinguat6.finbox.in',
+                    UAT7: 'https://lendinguat7.finbox.in',
+                    UAT8: 'https://lendinguat8.finbox.in',
+                    UAT9: 'https://lendinguat9.finbox.in',
+                    UAT10: 'https://lendinguat10.finbox.in',
+                    UAT11: 'https://lendinguat11.finbox.in',
+                    UAT12: 'https://lendinguat12.finbox.in',
+                    DEV1: 'https://lendingdev.finbox.in',
+                    DEV2: 'https://lendingdev2.finbox.in',
+                    DEV3: 'https://lendingdev3.finbox.in',
+                    DEV4: 'https://lendingdev4.finbox.in',
+                    DEV5: 'https://lendingdev5.finbox.in',
+                    DEV6: 'https://lendingdev6.finbox.in',
+                    DEV7: 'https://lendingdev7.finbox.in',
+                    DEV8: 'https://lendingdev8.finbox.in',
+                    DEV9: 'https://lendingdev9.finbox.in',
+                    DEV10: 'https://lendingdev10.finbox.in',
+                    DEV11: 'https://lendingdev11.finbox.in'
+                };
+
+                baseUrl = baseUrls[selectedEnv]; 
+
+                if (!baseUrl) {
+                    console.error('Base URL not found for the selected environment');
+                    return;
+                }
+
+                fetch(`${baseUrl}/v1/masterDashboard/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'asd.kulkarni@gmail.com',
+                        password: 'Finbox@123'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status) {
+                        authToken = data.data.token; 
+                        tokenDisplay.style.display = 'block';
+                        tokenDisplay.innerText = `Token: ${authToken}`;
+
+                        populateOrganizationDropdown(authToken);
+                    } else {
+                        console.error('API error:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+            });
+
+            orgDropdown.addEventListener('change', function() {
+                const selectedOrgID = orgDropdown.value;
+                orgIDDisplay.style.display = 'block';
+                orgIDDisplay.innerText = `Organization ID: ${selectedOrgID}`;
+
+                console.log('Selected Organization ID:', selectedOrgID); 
+                console.log('Auth Token:', authToken); 
+
+                populateGroupDropdown(selectedOrgID, authToken);
+            });
+
+            groupDropdown.addEventListener('change', function() {
+                const selectedGroup = groupDropdown.value;
+                console.log('Selected Group:', selectedGroup); 
+
+                populatePageDropdown(selectedGroup, authToken);
+            });
+
+            function populateOrganizationDropdown(authToken) {
+                fetch(`${baseUrl}/v1/masterDashboard/rbac/getRoleHelperData`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': authToken, 
+                        'page-header': 'Admin Page' 
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status) {
+                        const organizations = data.data.roleHelperDefinitions;
+                        orgDropdown.innerHTML = '<option value="">Select Organization</option>';
+                        organizations.forEach(org => {
+                            orgDropdown.innerHTML += `<option value="${org.organizationID}">${org.organizationName}</option>`;
+                        });
+                    } else {
+                        console.error('API error:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+            }
+
+            function populateGroupDropdown(orgID, authToken) {
+                fetch(`${baseUrl}/v1/masterDashboard/rbac/getAllGroups`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': authToken,
+                        'page-header': 'Admin Page'
+                    },
+                    body: JSON.stringify({
+                        'switchedOrgID': orgID
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status) {
+                        const groups = data.data.groups;
+                        groupDropdown.innerHTML = '<option value="">Select Group</option>';
+                        groups.forEach(group => {
+                            groupDropdown.innerHTML += `<option value="${group.groupName}">${group.groupName}</option>`;
+                        });
+                    } else {
+                        console.error('API error:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+            }
+
+            function populatePageDropdown(selectedGroup, authToken) {
+                fetch(`${baseUrl}/v1/masterDashboard/rbac/getGroupPermission`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': authToken,
+                        'page-header': 'Admin Page'
+                    },
+                    body: JSON.stringify({
+                        'groupName': selectedGroup,
+                        'switchedOrgID': orgDropdown.value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status) {
+                        const pages = data.data.groupPermissions;
+                        pageDropdown.innerHTML = '<option value="">Select Page</option>';
+                        pages.forEach(page => {
+                            pageDropdown.innerHTML += `<option value="${page.pageName}">${page.pageName}</option>`;
+                        });
+                    } else {
+                        console.error('API error:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Metadata Utility</title>
+<link rel="icon" type="image/x-icon" href="google.ico">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+  }
+  .container {
+    max-width: 700px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  select, input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  #tokenDisplay {
+  margin-top: 20px; 
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+}
+#errorMessage {
+  color: red;
+  margin-top: 10px; 
+}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
+</head>
+<body>
+
+<div class="container">
+  <h2>API Metadata Utility</h2>
+  <form id="migrationForm">
+    <div>
+      <label for="envDropdown">Select UAT/Dev/Prod Env:</label>
+      <select id="envDropdown" required>
+        <option value="" disabled selected>Please select an environment</option>
+        <option value="Prod">Prod</option> 
+        <option value="UAT1">UAT1</option>
+        <option value="UAT2">UAT2</option>
+        <option value="UAT3">UAT3</option>
+        <option value="UAT4">UAT4</option>
+        <option value="UAT5">UAT5</option>
+        <option value="UAT6">UAT6</option>
+        <option value="UAT7">UAT7</option>
+        <option value="UAT8">UAT8</option>
+        <option value="UAT9">UAT9</option>
+        <option value="UAT10">UAT10</option>
+        <option value="UAT11">UAT11</option>
+        <option value="UAT12">UAT12</option>
+        <option value="DEV1">DEV1</option>
+        <option value="DEV2">DEV2</option>
+        <option value="DEV3">DEV3</option>
+        <option value="DEV4">DEV4</option>
+        <option value="DEV5">DEV5</option>
+        <option value="DEV6">DEV6</option>
+        <option value="DEV7">DEV7</option>
+        <option value="DEV8">DEV8</option>
+        <option value="DEV9">DEV9</option>
+        <option value="DEV10">DEV10</option>
+        <option value="DEV11">DEV11</option>
+      </select>
+    </div>
+    <div>
+      <label for="routeDropdown">Select Route:</label>
+      <select id="routeDropdown" required>
+        <option value="">Please select a route</option>
+        <option value="Platform">Platform</option>
+        <option value="Lender">Lender</option>
+      </select>
+    </div>
+    <div>
+      <label for="isDefaultDropdown">IsDefault API:</label>
+      <select id="isDefaultDropdown" required>
+        <option value="">Please select an option</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+    <div>
+      <label for="apiName">API Name:</label>
+      <input type="text" id="apiName" placeholder="Enter API Name" required>
+    </div>
+    <div>
+      <label for="apiReadableName">API Readable Name:</label>
+      <input type="text" id="apiReadableName" placeholder="Enter API Readable Name" required>
+    </div>
+    <button type="button" id="runMigrationBtn">Run Migration</button>
+    
+    <div id="tokenDisplay"></div>
+    
+    <div id="errorMessage"></div>
+  </form>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+
+<script>
+    
+    function getBaseURL(env) {
+      var baseURLs = {
+        Prod: "https://lendingapis.finbox.in",
+        UAT1: "https://lendinguat.finbox.in",
+        UAT2: "https://lendinguat2.finbox.in",
+        UAT3: "https://lendinguat3.finbox.in",
+        UAT4: "https://lendinguat4.finbox.in",
+        UAT5: "https://lendinguat5.finbox.in",
+        UAT6: "https://lendinguat6.finbox.in",
+        UAT7: "https://lendinguat7.finbox.in",
+        UAT8: "https://lendinguat8.finbox.in",
+        UAT9: "https://lendinguat9.finbox.in",
+        UAT10: "https://lendinguat10.finbox.in",
+        UAT11: "https://lendinguat11.finbox.in",
+        UAT12: "https://lendinguat12.finbox.in",
+        DEV1: "https://lendingdev.finbox.in",
+        DEV2: "https://lendingdev2.finbox.in",
+        DEV3: "https://lendingdev3.finbox.in",
+        DEV4: "https://lendingdev4.finbox.in",
+        DEV5: "https://lendingdev5.finbox.in",
+        DEV6: "https://lendingdev6.finbox.in",
+        DEV7: "https://lendingdev7.finbox.in",
+        DEV8: "https://lendingdev8.finbox.in",
+        DEV9: "https://lendingdev9.finbox.in",
+        DEV10: "https://lendingdev10.finbox.in",
+        DEV11: "https://lendingdev11.finbox.in"
+      };
+      return baseURLs[env];
+    }
+    
+    
+    function fetchAndDisplayToken(env) {
+      if (!env) return; 
+      var baseURL = getBaseURL(env);
+      
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", baseURL + "/v1/masterDashboard/login");
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          var response = JSON.parse(xhr.responseText);
+          var token = response.data.token;
+          document.getElementById("tokenDisplay").innerText = "Token: " + token;
+        }
+      };
+      xhr.send(JSON.stringify({
+        email: "asd.kulkarni@gmail.com",
+        password: "Finbox@123"
+      }));
+    }
+    
+    
+    document.getElementById("envDropdown").addEventListener("change", function() {
+      var env = document.getElementById("envDropdown").value;
+      fetchAndDisplayToken(env);
+    });
+    
+    
+    function runMetadataMigration(env, token, apiRoute, apiReadableName, isDefaultAPI, dashboardRoute) {
+      var baseURL = getBaseURL(env);
+      
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", baseURL + "/v1/masterDashboard/apiMetadataCacheRefresh");
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("page-header", "Internal Page");
+      xhr.setRequestHeader("token", token);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          var response = JSON.parse(xhr.responseText);
+          if (response.status === true) {
+            document.getElementById("tokenDisplay").innerText = "API Metadata Migration Run Successfully";
+          } else {
+            alert("API Metadata Migration Failed");
+          }
+        } else {
+          alert("API Metadata Migration Failed");
+        }
+      };
+      xhr.send(JSON.stringify({
+        "dashboardRoute": dashboardRoute,
+        "apiRoute": apiRoute,
+        "apiReadableName": apiReadableName,
+        "isDefaultAPI": isDefaultAPI ? 1 : 0
+      }));
+    }
+    
+    
+    document.getElementById("runMigrationBtn").addEventListener("click", function() {
+      var env = document.getElementById("envDropdown").value;
+      var route = document.getElementById("routeDropdown").value;
+      var isDefault = document.getElementById("isDefaultDropdown").value;
+      var apiName = document.getElementById("apiName").value;
+      var apiReadableName = document.getElementById("apiReadableName").value;
+      var token = document.getElementById("tokenDisplay").innerText.split(" ")[1]; 
+      
+      var errorMessage = document.getElementById("errorMessage");
+      errorMessage.innerText = ""; 
+      
+      if (!env || !route || !isDefault || !apiName || !apiReadableName) {
+        errorMessage.innerText = "Please fill out all fields";
+        return;
+      }
+      
+      if (!/^\/.*$/.test(apiName)) {
+        errorMessage.innerText = "API Name should start with '/'";
+        return;
+      }
+      
+      
+      var dashboardRoute = route === "Platform" ? "v1/masterDashboard" : "v1/lender";
+      
+      
+      runMetadataMigration(env, token, apiName, apiReadableName, isDefault === "Yes", dashboardRoute);
+    });
+    
+    
+    fetchAndDisplayToken(document.getElementById("envDropdown").value);
+  </script>
+  
+  
+  
+</body>
+</html>
