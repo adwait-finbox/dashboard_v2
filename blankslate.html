@@ -122,6 +122,7 @@
             <button id="saveButton">Save</button>
             <button id="newButton">New Note</button>
             <button id="historyButton">View History</button>
+            <button id="clearButton">Clear</button>
             <div id="messageArea"></div>
         </div>
     </div>
@@ -145,7 +146,7 @@
         </div>
     </div>
 
-    <!-- Firebase JavaScript SDK (use the latest compatible version) -->
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
@@ -160,26 +161,27 @@
             appId: "1:1053490324341",
             measurementId: "G-WJWHZ571YW"
         };
-
+    
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
+    
         // Event listeners
         document.getElementById('saveButton').addEventListener('click', saveNote);
         document.getElementById('newButton').addEventListener('click', newNote);
         document.getElementById('historyButton').addEventListener('click', viewHistory);
+        document.getElementById('clearButton').addEventListener('click', clearNote);
         document.getElementById('backToNotesButton').addEventListener('click', backToNotes);
-
+    
         // Functions
         function saveNote() {
             const noteText = document.getElementById('note').value.trim();
             if (noteText === '') {
                 return;
             }
-
+    
             const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-
+    
             db.collection('notes').add({
                 text: noteText,
                 createdAt: timestamp
@@ -194,11 +196,11 @@
                 showMessage('Failed to save note. Please try again.', false);
             });
         }
-
+    
         function newNote() {
             saveNote();
         }
-
+    
         function showMessage(message, isSuccess) {
             const messageArea = document.getElementById('messageArea');
             messageArea.innerHTML = `<p class="${isSuccess ? 'success' : 'error'}">${message}</p>`;
@@ -207,88 +209,91 @@
                 messageArea.innerHTML = '';
             }, 3000); // Clear message after 3 seconds
         }
-
-function viewHistory() {
-    document.getElementById('mainContainer').style.display = 'none';
-    document.getElementById('historyContainer').style.display = 'flex';
-
-    const notesTableBody = document.getElementById('notesTableBody');
-    notesTableBody.innerHTML = '';
-
-    db.collection('notes').orderBy('createdAt', 'desc').get()
-    .then((querySnapshot) => {
-        if (querySnapshot.empty) {
-            notesTableBody.innerHTML = '<tr><td colspan="5">No notes saved.</td></tr>';
-            return;
-        }
-
-        querySnapshot.forEach((doc) => {
-            const note = doc.data();
-            const row = document.createElement('tr');
-
-            // Note ID
-            const noteIdCell = document.createElement('td');
-            noteIdCell.textContent = doc.id;
-            row.appendChild(noteIdCell);
-
-            // Preview (show first 50 characters)
-            const previewCell = document.createElement('td');
-            previewCell.textContent = note.text.length > 50 ? note.text.substring(0, 50) + '...' : note.text;
-            row.appendChild(previewCell);
-
-            // Created At
-            const createdAtCell = document.createElement('td');
-            createdAtCell.textContent = note.createdAt.toDate().toLocaleString();
-            row.appendChild(createdAtCell);
-
-            // View Note Button
-            const viewButtonCell = document.createElement('td');
-            const viewButton = document.createElement('button');
-            viewButton.textContent = 'View';
-            viewButton.addEventListener('click', () => {
-                // Fetch the note text and display it in the main notes container
-                document.getElementById('note').value = note.text;
-                backToNotes(); // Return to main notes page
-            });
-            viewButtonCell.appendChild(viewButton);
-            row.appendChild(viewButtonCell);
-
-            // Delete Note Button
-            const deleteButtonCell = document.createElement('td');
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Delete';
-            deleteButton.addEventListener('click', () => {
-                // Delete the note from Firestore
-                db.collection('notes').doc(doc.id).delete()
-                .then(() => {
-                    console.log("Note successfully deleted from Firestore!");
-                    showMessage('Note deleted successfully!', true);
-                    // Optionally, refresh the history view
-                    viewHistory();
-                })
-                .catch((error) => {
-                    console.error("Error deleting note: ", error);
-                    showMessage('Failed to delete note. Please try again.', false);
+    
+        function viewHistory() {
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('historyContainer').style.display = 'flex';
+    
+            const notesTableBody = document.getElementById('notesTableBody');
+            notesTableBody.innerHTML = '';
+    
+            db.collection('notes').orderBy('createdAt', 'desc').get()
+            .then((querySnapshot) => {
+                if (querySnapshot.empty) {
+                    notesTableBody.innerHTML = '<tr><td colspan="5">No notes saved.</td></tr>';
+                    return;
+                }
+    
+                querySnapshot.forEach((doc) => {
+                    const note = doc.data();
+                    const row = document.createElement('tr');
+    
+                    // Note ID
+                    const noteIdCell = document.createElement('td');
+                    noteIdCell.textContent = doc.id;
+                    row.appendChild(noteIdCell);
+    
+                    // Preview (show first 50 characters)
+                    const previewCell = document.createElement('td');
+                    previewCell.textContent = note.text.length > 50 ? note.text.substring(0, 50) + '...' : note.text;
+                    row.appendChild(previewCell);
+    
+                    // Created At
+                    const createdAtCell = document.createElement('td');
+                    createdAtCell.textContent = note.createdAt.toDate().toLocaleString();
+                    row.appendChild(createdAtCell);
+    
+                    // View Note Button
+                    const viewButtonCell = document.createElement('td');
+                    const viewButton = document.createElement('button');
+                    viewButton.textContent = 'View';
+                    viewButton.addEventListener('click', () => {
+                        // Fetch the note text and display it in the main notes container
+                        document.getElementById('note').value = note.text;
+                        backToNotes(); // Return to main notes page
+                    });
+                    viewButtonCell.appendChild(viewButton);
+                    row.appendChild(viewButtonCell);
+    
+                    // Delete Note Button
+                    const deleteButtonCell = document.createElement('td');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => {
+                        // Delete the note from Firestore
+                        db.collection('notes').doc(doc.id).delete()
+                        .then(() => {
+                            console.log("Note successfully deleted from Firestore!");
+                            showMessage('Note deleted successfully!', true);
+                            // Optionally, refresh the history view
+                            viewHistory();
+                        })
+                        .catch((error) => {
+                            console.error("Error deleting note: ", error);
+                            showMessage('Failed to delete note. Please try again.', false);
+                        });
+                    });
+                    deleteButtonCell.appendChild(deleteButton);
+                    row.appendChild(deleteButtonCell);
+    
+                    notesTableBody.appendChild(row);
                 });
+            })
+            .catch((error) => {
+                console.error("Error retrieving notes: ", error);
+                notesTableBody.innerHTML = '<tr><td colspan="5">Failed to fetch notes.</td></tr>';
             });
-            deleteButtonCell.appendChild(deleteButton);
-            row.appendChild(deleteButtonCell);
-
-            notesTableBody.appendChild(row);
-        });
-    })
-    .catch((error) => {
-        console.error("Error retrieving notes: ", error);
-        notesTableBody.innerHTML = '<tr><td colspan="4">Failed to fetch notes.</td></tr>';
-    });
-}
-
-
-
+        }
+    
+        function clearNote() {
+            document.getElementById('note').value = ''; // Clears the textarea
+        }
+    
         function backToNotes() {
             document.getElementById('historyContainer').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'flex';
         }
     </script>
-</body>
-</html>
+    </body>
+    </html>
+    
