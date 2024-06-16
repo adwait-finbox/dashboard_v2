@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Notes</title>
+    <link rel="icon" type="image/x-icon" href="creativity.ico">
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #notesContainer {
+            width: 100%;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+        .note {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .note:last-child {
+            border-bottom: none;
+        }
+        .note-date {
+            font-size: 0.9em;
+            color: #666;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginContainer" class="container">
+        <button id="githubSignInButton">Sign in with GitHub</button>
+        <p id="loginError" class="error"></p>
+    </div>
+    
+    <div id="notesContainer" class="container" style="display: none;">
+        <!-- Notes will be dynamically added here -->
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyATte5dS_XTgulAlI-m-XdB_kvO_qr4PmM",
+            authDomain: "dashboard-1c680.firebaseapp.com",
+            projectId: "dashboard-1c680",
+            storageBucket: "dashboard-1c680.appspot.com",
+            messagingSenderId: "1053490324341",
+            appId: "1:1053490324341",
+            measurementId: "G-WJWHZ571YW"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const githubSignInButton = document.getElementById('githubSignInButton');
+        const loginContainer = document.getElementById('loginContainer');
+        const notesContainer = document.getElementById('notesContainer');
+
+        githubSignInButton.addEventListener('click', () => {
+            const provider = new firebase.auth.GithubAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+            .then(result => {
+                showNotes();
+            }).catch(error => {
+                document.getElementById('loginError').textContent = error.message;
+            });
+        });
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                showNotes();
+            }
+        });
+
+        function showNotes() {
+            loginContainer.style.display = 'none';
+            notesContainer.style.display = 'block';
+
+            db.collection('notes').orderBy('createdAt', 'desc').get()
+            .then(querySnapshot => {
+                notesContainer.innerHTML = '';
+                if (querySnapshot.empty) {
+                    notesContainer.innerHTML = '<p>No notes saved.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach(doc => {
+                    const note = doc.data();
+                    const noteDiv = document.createElement('div');
+                    noteDiv.className = 'note';
+                    noteDiv.innerHTML = `
+                        <p>${note.text}</p>
+                        <p class="note-date">${note.createdAt.toDate().toLocaleString()}</p>
+                    `;
+                    notesContainer.appendChild(noteDiv);
+                });
+            }).catch(error => {
+                notesContainer.innerHTML = `<p class="error">Error fetching notes: ${error.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
