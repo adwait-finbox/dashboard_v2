@@ -132,10 +132,10 @@
                 <thead>
                     <tr>
                         <th>Note ID</th>
-                        <!-- <th>Note</th> -->
                         <th>Preview</th>
                         <th>Created At</th>
                         <th>View Note</th>
+                        <th>Delete Note</th>
                     </tr>
                 </thead>
                 <tbody id="notesTableBody">
@@ -208,7 +208,7 @@
             }, 3000); // Clear message after 3 seconds
         }
 
-        function viewHistory() {
+function viewHistory() {
     document.getElementById('mainContainer').style.display = 'none';
     document.getElementById('historyContainer').style.display = 'flex';
 
@@ -218,7 +218,7 @@
     db.collection('notes').orderBy('createdAt', 'desc').get()
     .then((querySnapshot) => {
         if (querySnapshot.empty) {
-            notesTableBody.innerHTML = '<tr><td colspan="4">No notes saved.</td></tr>';
+            notesTableBody.innerHTML = '<tr><td colspan="5">No notes saved.</td></tr>';
             return;
         }
 
@@ -252,6 +252,27 @@
             });
             viewButtonCell.appendChild(viewButton);
             row.appendChild(viewButtonCell);
+
+            // Delete Note Button
+            const deleteButtonCell = document.createElement('td');
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', () => {
+                // Delete the note from Firestore
+                db.collection('notes').doc(doc.id).delete()
+                .then(() => {
+                    console.log("Note successfully deleted from Firestore!");
+                    showMessage('Note deleted successfully!', true);
+                    // Optionally, refresh the history view
+                    viewHistory();
+                })
+                .catch((error) => {
+                    console.error("Error deleting note: ", error);
+                    showMessage('Failed to delete note. Please try again.', false);
+                });
+            });
+            deleteButtonCell.appendChild(deleteButton);
+            row.appendChild(deleteButtonCell);
 
             notesTableBody.appendChild(row);
         });
