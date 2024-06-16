@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BlankSlate</title>
     <link rel="icon" type="image/x-icon" href="creativity.ico">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism.min.css" integrity="sha512-f80BB2K3gTx7fQf7O3cEF7orWlE/lIKu8S1/GxXREn5B9KxCOs0n1r3FOs7C3s3skgkCZvDRtR2lKkP0Omgl3g==" crossorigin="anonymous" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js" integrity="sha512-Sl6DNo9BOg2bgnttkNQn1Bg2RRclLF3Q1KvPQtjmls3WTQ+kSWBj6y7EDdtwDhwgjYQtvPEePnoIBpQ2t9CmKw==" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-json.min.js" integrity="sha512-1Cjx0b6sMg3aG05Kz8kOeQoKpFQ0+Khg3t6HISuqlrNY0u2KcH6Zxq9UoCUIhh5RYt10eX7IePwEn3AkvoDj3Q==" crossorigin="anonymous"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -32,7 +29,7 @@
             position: relative;
         }
         textarea {
-            width: 1150px;
+            width: 1100px;
             height: 600px;
             padding: 10px;
             border: 1px solid #ccc;
@@ -56,6 +53,7 @@
             color: white;
             cursor: pointer;
             font-size: 14px;
+            width: 150px;
         }
         button:hover {
             background-color: #0056b3;
@@ -113,94 +111,31 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        /* Reset Prism.js styles for code blocks */
-        pre {
-            margin: 0;
-            padding: 0;
-            white-space: pre-wrap; /* Preserve formatting */
+        .json-control {
+            cursor: pointer;
+            margin-right: 10px;
         }
         
-        /* Adjust Prism.js code block */
-        pre[class*="language-"] {
-            margin: 1em 0;
-            padding: 1em;
-            overflow: auto;
-            border-radius: 5px;
-            background: #f5f5f5; /* Adjust background color */
-            color: #333; /* Adjust text color */
-            border: 1px solid #ddd; /* Add border for clarity */
+        .json-control:hover {
+            text-decoration: underline;
         }
         
-        /* Adjust Prism.js code block language indicator */
-        .token.comment,
-        .token.prolog,
-        .token.doctype,
-        .token.cdata {
-            color: #999;
+        .json-control:before {
+            content: '▶';
+            display: inline-block;
+            margin-right: 5px;
+            transform: rotate(0deg);
+            transition: transform 0.3s ease-in-out;
         }
         
-        .token.punctuation {
-            color: #999;
-        }
-        
-        .token.property,
-        .token.tag,
-        .token.constant,
-        .token.symbol,
-        .token.deleted {
-            color: #905;
-        }
-        
-        .token.boolean,
-        .token.number {
-            color: #690;
-        }
-        
-        .token.selector,
-        .token.attr-name,
-        .token.string,
-        .token.char,
-        .token.builtin,
-        .token.inserted {
-            color: #690;
-        }
-        
-        .token.operator,
-        .token.entity,
-        .token.url,
-        .token.variable {
-            color: #9a6e3a;
-        }
-        
-        .token.atrule,
-        .token.attr-value,
-        .token.function,
-        .token.class-name {
-            color: #07a;
-        }
-        
-        .token.keyword {
-            color: #07a;
-        }
-        
-        .token.regex,
-        .token.important {
-            color: #e90;
-        }
-        
-        .token.bold {
-            font-weight: bold;
-        }
-        
-        .token.italic {
-            font-style: italic;
+        .json-control.collapsed:before {
+            transform: rotate(-90deg);
         }
     </style>
 </head>
 <body>
     <div id="loginContainer" class="container">
         <form id="loginForm">
-            <!-- Add your login form elements here -->
         </form>
         <button id="githubSignInButton">Sign in with GitHub</button>
         <p id="loginError" class="error"></p>
@@ -219,6 +154,15 @@
             <div id="messageArea"></div>
         </div>
     </div>
+
+    <div class="note-container">
+        <div id="jsonControls">
+            <span id="collapseAll" class="json-control">Collapse All</span>
+            <span id="expandAll" class="json-control">Expand All</span>
+        </div>
+        <code id="note" class="language-json" placeholder="Start typing..."></code>
+    </div>
+
 
     <div class="container" id="historyContainer">
         <button id="backToNotesButton">Back to Notes</button>
@@ -240,12 +184,13 @@
         </div>
     </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-<script>
-    // Initialize Firebase
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script>
+        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyATte5dS_XTgulAlI-m-XdB_kvO_qr4PmM",
             authDomain: "dashboard-1c680.firebaseapp.com",
@@ -254,222 +199,283 @@
             messagingSenderId: "1053490324341",
             appId: "1:1053490324341",
             measurementId: "G-WJWHZ571YW"
-    };
+        };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-    // GitHub sign-in button
-    const githubSignInButton = document.getElementById('githubSignInButton');
+        // GitHub sign-in button
+        const githubSignInButton = document.getElementById('githubSignInButton');
 
-    githubSignInButton.addEventListener('click', () => {
-        const provider = new firebase.auth.GithubAuthProvider();
-        firebase.auth().signInWithPopup(provider)
-        .then(function(result) {
-            let token = result.credential.accessToken;
-            let user = result.user;
-            console.log(token);
-            console.log(user);
-        }).catch(function(error) {
-            var errorCode = error.code;
-            var errorMessage = error.message;
-            console.log(errorCode);
-            console.log(errorMessage);
-        });
-    });
-
-    // Event listener for login form submission
-    document.getElementById('loginForm').addEventListener('submit', e => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        auth.signInWithEmailAndPassword(email, password)
-            .then(() => {
-                showApp();
-            })
-            .catch(error => {
-                document.getElementById('loginError').textContent = error.message;
+        githubSignInButton.addEventListener('click', () => {
+            const provider = new firebase.auth.GithubAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+            .then(function(result) {
+                let token = result.credential.accessToken;
+                let user = result.user;
+                console.log(token)
+                console.log(user)
+            }).catch(function(error) {
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                console.log(error.code)
+                console.log(error.message)
             });
-    });
+        });
 
-    // Check authentication state
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            showApp();
-        } else {
-            showLogin();
+        // Event listener for login form submission
+        document.getElementById('loginForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    showApp();
+                })
+                .catch(error => {
+                    document.getElementById('loginError').textContent = error.message;
+                });
+        });
+
+        // Check authentication state
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                showApp();
+            } else {
+                showLogin();
+            }
+        });
+
+        // Function to show the main application UI
+        function showApp() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'flex';
+            document.getElementById('historyContainer').style.display = 'none';
         }
-    });
 
-    // Function to show the main application UI
-    function showApp() {
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('mainContainer').style.display = 'flex';
-        document.getElementById('historyContainer').style.display = 'none';
-    }
-
-    // Function to show the login form
-    function showLogin() {
-        document.getElementById('loginContainer').style.display = 'flex';
-        document.getElementById('mainContainer').style.display = 'none';
-        document.getElementById('historyContainer').style.display = 'none';
-    }
-
-    // Event listeners
-    document.getElementById('saveButton').addEventListener('click', saveNote);
-    document.getElementById('newButton').addEventListener('click', newNote);
-    document.getElementById('historyButton').addEventListener('click', viewHistory);
-    document.getElementById('clearButton').addEventListener('click', clearNote);
-    document.getElementById('backToNotesButton').addEventListener('click', backToNotes);
-    document.getElementById('beautifyJsonButton').addEventListener('click', beautifyJson);
-    document.addEventListener('keydown', function(event) {
-        if (event.metaKey && event.key === 's') {
+        // Function to show the login form
+        function showLogin() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('historyContainer').style.display = 'none';
+        }
+    
+        // Event listeners
+        document.getElementById('saveButton').addEventListener('click', saveNote);
+        document.getElementById('newButton').addEventListener('click', newNote);
+        document.getElementById('historyButton').addEventListener('click', viewHistory);
+        document.getElementById('clearButton').addEventListener('click', clearNote);
+        document.getElementById('backToNotesButton').addEventListener('click', backToNotes);
+        document.getElementById('beautifyJsonButton').addEventListener('click', beautifyJson);
+        document.getElementById('collapseAll').addEventListener('click', function() {collapseAll();});
+        document.getElementById('expandAll').addEventListener('click', function() {expandAll();});
+        document.addEventListener('keydown', function(event) {
+            if (event.metaKey && event.key === 's') {
             event.preventDefault(); // Prevent default behavior (like focusing on the URL bar)
             saveNote();
-        }
-    });
-    document.addEventListener('keydown', function(event) {
-        if (event.ctrlKey && event.key === 'z') {
-            clearNote();
-        }
-    });
-
-    // Functions
-    function saveNote() {
-        const noteText = document.getElementById('note').value.trim();
-        if (noteText === '') {
-            return;
-        }
-
-        const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-
-        db.collection('notes').add({
-            text: noteText,
-            createdAt: timestamp
-        })
-        .then(() => {
-            console.log("Note successfully saved to Firestore!");
-            showMessage('Note saved successfully!', true);
-            document.getElementById('note').value = '';
-        })
-        .catch((error) => {
-            console.error("Error saving note: ", error);
-            showMessage('Failed to save note. Please try again.', false);
+            }
         });
-    }
-
-    function newNote() {
-        saveNote();
-    }
-
-    function beautifyJson() {
-        const noteText = document.getElementById('note').value.trim();
-        try {
-            const parsedJson = JSON.parse(noteText);
-            const beautifiedJson = JSON.stringify(parsedJson, null, 2);
-            document.getElementById('note').value = beautifiedJson;
-
-            // Apply syntax highlighting with Prism.js
-            Prism.highlightAll();
-
-            showMessage('JSON beautified successfully!', true);
-        } catch (error) {
-            showMessage('Invalid JSON format!', false);
-        }
-    }
-
-    function showMessage(message, isSuccess) {
-        const messageArea = document.getElementById('messageArea');
-        messageArea.innerHTML = `<p class="${isSuccess ? 'success' : 'error'}">${message}</p>`;
-        // Clear message after some time (optional)
-        setTimeout(() => {
-            messageArea.innerHTML = '';
-        }, 3000); // Clear message after 3 seconds
-    }
-
-    function viewHistory() {
-        document.getElementById('mainContainer').style.display = 'none';
-        document.getElementById('historyContainer').style.display = 'flex';
-
-        const notesTableBody = document.getElementById('notesTableBody');
-        notesTableBody.innerHTML = '';
-
-        db.collection('notes').orderBy('createdAt', 'desc').get()
-        .then((querySnapshot) => {
-            if (querySnapshot.empty) {
-                notesTableBody.innerHTML = '<tr><td colspan="5">No notes saved.</td></tr>';
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'z') {
+            clearNote();
+            }
+        });
+    
+        // Functions
+        function saveNote() {
+            const noteText = document.getElementById('note').value.trim();
+            if (noteText === '') {
                 return;
             }
-
-            querySnapshot.forEach((doc) => {
-                const note = doc.data();
-                const row = document.createElement('tr');
-
-                // Note ID
-                const noteIdCell = document.createElement('td');
-                noteIdCell.textContent = doc.id;
-                row.appendChild(noteIdCell);
-
-                // Preview (show first 50 characters)
-                const previewCell = document.createElement('td');
-                previewCell.textContent = note.text.length > 50 ? note.text.substring(0, 50) + '...' : note.text;
-                row.appendChild(previewCell);
-
-                // Created At
-                const createdAtCell = document.createElement('td');
-                createdAtCell.textContent = note.createdAt.toDate().toLocaleString();
-                row.appendChild(createdAtCell);
-
-                // View Note Button
-                const viewButtonCell = document.createElement('td');
-                const viewButton = document.createElement('button');
-                viewButton.textContent = 'View';
-                viewButton.addEventListener('click', () => {
-                    // Fetch the note text and display it in the main notes container
-                    document.getElementById('note').value = note.text;
-                    backToNotes(); // Return to main notes page
-                });
-                viewButtonCell.appendChild(viewButton);
-                row.appendChild(viewButtonCell);
-
-                // Delete Note Button
-                const deleteButtonCell = document.createElement('td');
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.addEventListener('click', () => {
-                    // Delete the note from Firestore
-                    db.collection('notes').doc(doc.id).delete()
-                    .then(() => {
-                        console.log("Note successfully deleted from Firestore!");
-                        showMessage('Note deleted successfully!', true);
-                        // Optionally, refresh the history view
-                        viewHistory();
-                    })
-                    .catch((error) => {
-                        console.error("Error deleting note: ", error);
-                        showMessage('Failed to delete note. Please try again.', false);
-                    });
-                });
-                deleteButtonCell.appendChild(deleteButton);
-                row.appendChild(deleteButtonCell);
-
-                notesTableBody.appendChild(row);
+    
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+    
+            db.collection('notes').add({
+                text: noteText,
+                createdAt: timestamp
+            })
+            .then(() => {
+                console.log("Note successfully saved to Firestore!");
+                showMessage('Note saved successfully!', true);
+                document.getElementById('note').value = '';
+            })
+            .catch((error) => {
+                console.error("Error saving note: ", error);
+                showMessage('Failed to save note. Please try again.', false);
             });
-        })
-        .catch((error) => {
-            console.error("Error retrieving notes: ", error);
-            notesTableBody.innerHTML = '<tr><td colspan="5">Failed to fetch notes.</td></tr>';
-        });
-    }
+        }
+    
+        function newNote() {
+            saveNote();
+        }
 
-    function clearNote() {
-        document.getElementById('note').value = ''; // Clears the textarea
-    }
+        function beautifyJson() {
+            const noteText = document.getElementById('note').value.trim();
+            try {
+                const parsedJson = JSON.parse(noteText);
+                const beautifiedJson = JSON.stringify(parsedJson, null, 2);
+                document.getElementById('note').value = beautifiedJson;
+                showMessage('JSON beautified successfully!', true);
+            } catch (error) {
+                showMessage('Invalid JSON format!', false);
+            }
+        }
+    
+        function showMessage(message, isSuccess) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<p class="${isSuccess ? 'success' : 'error'}">${message}</p>`;
+            // Clear message after some time (optional)
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 3000); // Clear message after 3 seconds
+        }
+    
+        function viewHistory() {
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('historyContainer').style.display = 'flex';
+    
+            const notesTableBody = document.getElementById('notesTableBody');
+            notesTableBody.innerHTML = '';
+    
+            db.collection('notes').orderBy('createdAt', 'desc').get()
+            .then((querySnapshot) => {
+                if (querySnapshot.empty) {
+                    notesTableBody.innerHTML = '<tr><td colspan="5">No notes saved.</td></tr>';
+                    return;
+                }
+    
+                querySnapshot.forEach((doc) => {
+                    const note = doc.data();
+                    const row = document.createElement('tr');
+    
+                    // Note ID
+                    const noteIdCell = document.createElement('td');
+                    noteIdCell.textContent = doc.id;
+                    row.appendChild(noteIdCell);
+    
+                    // Preview (show first 50 characters)
+                    const previewCell = document.createElement('td');
+                    previewCell.textContent = note.text.length > 50 ? note.text.substring(0, 50) + '...' : note.text;
+                    row.appendChild(previewCell);
+    
+                    // Created At
+                    const createdAtCell = document.createElement('td');
+                    createdAtCell.textContent = note.createdAt.toDate().toLocaleString();
+                    row.appendChild(createdAtCell);
+    
+                    // View Note Button
+                    const viewButtonCell = document.createElement('td');
+                    const viewButton = document.createElement('button');
+                    viewButton.textContent = 'View';
+                    viewButton.addEventListener('click', () => {
+                        // Fetch the note text and display it in the main notes container
+                        document.getElementById('note').value = note.text;
+                        backToNotes(); // Return to main notes page
+                    });
+                    viewButtonCell.appendChild(viewButton);
+                    row.appendChild(viewButtonCell);
+    
+                    // Delete Note Button
+                    const deleteButtonCell = document.createElement('td');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => {
+                        // Delete the note from Firestore
+                        db.collection('notes').doc(doc.id).delete()
+                        .then(() => {
+                            console.log("Note successfully deleted from Firestore!");
+                            showMessage('Note deleted successfully!', true);
+                            // Optionally, refresh the history view
+                            viewHistory();
+                        })
+                        .catch((error) => {
+                            console.error("Error deleting note: ", error);
+                            showMessage('Failed to delete note. Please try again.', false);
+                        });
+                    });
+                    deleteButtonCell.appendChild(deleteButton);
+                    row.appendChild(deleteButtonCell);
+    
+                    notesTableBody.appendChild(row);
+                });
+            })
+            .catch((error) => {
+                console.error("Error retrieving notes: ", error);
+                notesTableBody.innerHTML = '<tr><td colspan="5">Failed to fetch notes.</td></tr>';
+            });
+        }
+    
+        function clearNote() {
+            document.getElementById('note').value = ''; // Clears the textarea
+        }
 
-    function backToNotes() {
-        document.getElementById('historyContainer').style.display = 'none';
-        document.getElementById('mainContainer').style.display = 'flex';
-    }
-</script>
+        // Function to collapse all JSON objects
+        function collapseAll() {
+            const textarea = document.getElementById('note');
+            const json = textarea.value.trim();
+            try {
+                const parsedJson = JSON.parse(json);
+                const collapsedJson = collapseObject(parsedJson);
+                textarea.value = JSON.stringify(collapsedJson, null, 2);
+                Prism.highlightElement(textarea);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+                showMessage('Invalid JSON format!', false);
+            }
+        }
+        
+        // Function to expand all JSON objects
+        function expandAll() {
+            const textarea = document.getElementById('note');
+            const json = textarea.value.trim();
+            try {
+                const parsedJson = JSON.parse(json);
+                const expandedJson = expandObject(parsedJson);
+                textarea.value = JSON.stringify(expandedJson, null, 2);
+                Prism.highlightElement(textarea);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+                showMessage('Invalid JSON format!', false);
+            }
+        }
+        
+        // Recursive function to collapse JSON objects
+        function collapseObject(obj) {
+            if (typeof obj !== 'object' || obj === null) {
+                return obj;
+            }
+            if (Array.isArray(obj)) {
+                return obj.map(item => collapseObject(item));
+            }
+            const collapsed = {};
+            for (let key in obj) {
+                collapsed[key] = typeof obj[key] === 'object' ? null : obj[key];
+            }
+            return collapsed;
+        }
+        
+        // Recursive function to expand JSON objects
+        function expandObject(obj) {
+            if (typeof obj !== 'object' || obj === null) {
+                return obj;
+            }
+            if (Array.isArray(obj)) {
+                return obj.map(item => expandObject(item));
+            }
+            const expanded = {};
+            for (let key in obj) {
+                expanded[key] = typeof obj[key] === 'object' ? expandObject(obj[key]) : obj[key];
+            }
+            return expanded;
+        }
+    
+        function backToNotes() {
+            document.getElementById('historyContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'flex';
+        }
+    </script>
+    </body>
+    </html>
+    
