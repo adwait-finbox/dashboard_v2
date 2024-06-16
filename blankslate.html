@@ -114,7 +114,14 @@
     </style>
 </head>
 <body>
-    <div class="container" id="mainContainer">
+    <div id="loginContainer" class="container">
+        <form id="loginForm">
+        </form>
+        <button id="githubSignInButton">Sign in with GitHub</button>
+        <p id="loginError" class="error"></p>
+    </div>
+    
+    <div class="container" id="mainContainer" style="display: none;">
         <div class="note-container">
             <textarea id="note" placeholder="Start typing..."></textarea>
         </div>
@@ -126,6 +133,7 @@
             <div id="messageArea"></div>
         </div>
     </div>
+
     <div class="container" id="historyContainer">
         <button id="backToNotesButton">Back to Notes</button>
         <div class="table-container">
@@ -149,9 +157,10 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
     <script>
-        // Firebase configuration
+        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyATte5dS_XTgulAlI-m-XdB_kvO_qr4PmM",
             authDomain: "dashboard-1c680.firebaseapp.com",
@@ -161,10 +170,67 @@
             appId: "1:1053490324341",
             measurementId: "G-WJWHZ571YW"
         };
-    
-        // Initialize Firebase
+
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.firestore();
+
+        // GitHub sign-in button
+        const githubSignInButton = document.getElementById('githubSignInButton');
+
+        githubSignInButton.addEventListener('click', () => {
+            const provider = new firebase.auth.GithubAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+            .then(function(result) {
+                let token = result.credential.accessToken;
+                let user = result.user;
+                console.log(token)
+                console.log(user)
+            }).catch(function(error) {
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                console.log(error.code)
+                console.log(error.message)
+            });
+        });
+
+        // Event listener for login form submission
+        document.getElementById('loginForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    showApp();
+                })
+                .catch(error => {
+                    document.getElementById('loginError').textContent = error.message;
+                });
+        });
+
+        // Check authentication state
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                showApp();
+            } else {
+                showLogin();
+            }
+        });
+
+        // Function to show the main application UI
+        function showApp() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'flex';
+            document.getElementById('historyContainer').style.display = 'none';
+        }
+
+        // Function to show the login form
+        function showLogin() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('historyContainer').style.display = 'none';
+        }
     
         // Event listeners
         document.getElementById('saveButton').addEventListener('click', saveNote);
