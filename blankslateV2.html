@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlankSlate</title>
+    <link rel="icon" type="image/x-icon" href="creativity.ico">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column; /* Adjusted to stack on mobile */
+            justify-content: center;
+            align-items: center;
+            width: 100%; /* Adjusted to full width */
+            max-width: 100%; /* Ensures it doesn't exceed screen width */
+            padding: 10px; /* Added padding for spacing */
+        }
+        .note-container {
+            flex: 1;
+            position: relative;
+            width: 100%; /* Ensures it takes full width of parent */
+            max-width: 100%; /* Ensures it doesn't exceed screen width */
+        }
+        textarea {
+            width: 100%; /* Adjusted to take full width of parent */
+            max-width: 100%; /* Ensures it doesn't exceed screen width */
+            height: 300px; /* Adjusted height for usability */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box; /* Ensures padding is included in width */
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px; /* Added margin for spacing */
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px; /* Adjusted for spacing between buttons */
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            width: auto; /* Adjusted to fit content */
+            max-width: 150px; /* Limits width to a reasonable size */
+            text-align: center; /* Centers text */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="note-container" id="mainContainer">
+            <textarea id="note" placeholder="Start typing..."></textarea>
+        </div>
+        <div class="buttons">
+            <button id="saveButton">Save</button>
+            <button id="newButton">New Note</button>
+            <button id="historyButton">View History</button>
+        </div>
+    </div>
+    <div class="container" id="historyContainer" style="display: none;">
+        <div class="note-container">
+            <h1>Notes History</h1>
+            <div id="notesList"></div>
+            <button id="backButton">Back to Note</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('saveButton').addEventListener('click', saveNote);
+        document.getElementById('newButton').addEventListener('click', newNote);
+        document.getElementById('historyButton').addEventListener('click', viewHistory);
+        document.getElementById('backButton').addEventListener('click', backToNote);
+
+        function saveNote() {
+            const noteText = document.getElementById('note').value;
+            if (noteText.trim() === '') {
+                return;
+            }
+
+            try {
+                const notes = JSON.parse(localStorage.getItem('notes')) || [];
+                notes.push({ text: noteText, date: new Date().toLocaleString() });
+                localStorage.setItem('notes', JSON.stringify(notes));
+            } catch (error) {
+                alert('Failed to save note. Local storage limit exceeded.');
+                // Handle gracefully or log the error as needed
+            }
+        }
+
+        function newNote() {
+            saveNote();
+            document.getElementById('note').value = '';
+        }
+
+        function viewHistory() {
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('historyContainer').style.display = 'block';
+
+            const notesList = document.getElementById('notesList');
+            notesList.innerHTML = '';
+            const notes = JSON.parse(localStorage.getItem('notes')) || [];
+            
+            if (notes.length === 0) {
+                notesList.innerHTML = '<p>No notes saved.</p>';
+                return;
+            }
+
+            notes.forEach((note, index) => {
+                const noteDiv = document.createElement('div');
+                noteDiv.classList.add('note');
+                noteDiv.innerHTML = `
+                    <h2>Note ${index + 1}</h2>
+                    <p>${note.text}</p>
+                    <small>${note.date}</small>
+                    <hr>
+                `;
+                notesList.appendChild(noteDiv);
+            });
+        }
+
+        function backToNote() {
+            document.getElementById('historyContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
