@@ -369,6 +369,10 @@
                 const parsedJson = JSON.parse(noteText);
                 const beautifiedJson = JSON.stringify(parsedJson, null, 2);
                 document.getElementById('note').value = beautifiedJson;
+        
+                // Apply syntax highlighting with Prism.js
+                Prism.highlightAll();
+        
                 showMessage('JSON beautified successfully!', true);
             } catch (error) {
                 showMessage('Invalid JSON format!', false);
