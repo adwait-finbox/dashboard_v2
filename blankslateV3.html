@@ -18,69 +18,43 @@
         }
         .container {
             display: flex;
-            flex-direction: column; /* Adjusted to stack on mobile */
             justify-content: center;
-            align-items: center;
-            width: 100%; /* Adjusted to full width */
-            max-width: 100%; /* Ensures it doesn't exceed screen width */
-            padding: 10px; /* Added padding for spacing */
+            align-items: flex-start;
+            width: 90%;
+            max-width: 800px;
         }
         .note-container {
             flex: 1;
             position: relative;
-            width: 100%; /* Ensures it takes full width of parent */
-            max-width: 100%; /* Ensures it doesn't exceed screen width */
         }
         textarea {
-            width: 100%; /* Adjusted to take full width of parent */
-            max-width: 100%; /* Ensures it doesn't exceed screen width */
-            height: 300px; /* Adjusted height for usability */
+            width: 1100px;
+            height: 600px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-            box-sizing: border-box; /* Ensures padding is included in width */
         }
         .buttons {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px; /* Added margin for spacing */
+            flex-direction: column;
+            margin-left: 20px;
+            padding: 10px;
+            width: 100px;
         }
         button {
             padding: 10px 15px;
-            margin: 5px; /* Adjusted for spacing between buttons */
+            margin-bottom: 10px;
             border: none;
             border-radius: 5px;
             background-color: #007BFF;
             color: white;
             cursor: pointer;
             font-size: 14px;
-            width: auto; /* Adjusted to fit content */
-            max-width: 150px; /* Limits width to a reasonable size */
-            text-align: center; /* Centers text */
+            width: 130px;
         }
         button:hover {
             background-color: #0056b3;
-        }
-        .notes-list {
-            margin-top: 20px;
-        }
-        .note {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #fff;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .note h2 {
-            margin-top: 0;
-        }
-        .note p {
-            margin-bottom: 5px;
-        }
-        .note small {
-            color: #666;
         }
     </style>
 </head>
@@ -98,31 +72,31 @@
     <div class="container" id="historyContainer" style="display: none;">
         <div class="note-container">
             <h1>Notes History</h1>
-            <div class="notes-list" id="notesList"></div>
+            <div id="notesList"></div>
             <button id="backButton">Back to Note</button>
         </div>
     </div>
-
     <!-- Firebase JavaScript SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.0.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.1/firebase-database.js"></script>
     <script>
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyATte5dS_XTgulAlI-m-XdB_kvO_qr4PmM",
             authDomain: "dashboard-1c680.firebaseapp.com",
+            databaseURL: "https://dashboard-1c680-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "dashboard-1c680",
             storageBucket: "dashboard-1c680.appspot.com",
             messagingSenderId: "1053490324341",
-            appId: "1:1053490324341:web:c2f1819dc3d749368fe93c",
+            appId: "1:1053490324341:web",
             measurementId: "G-WJWHZ571YW"
         };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
 
-        // Initialize Firestore
-        const db = firebase.firestore();
+        // Get a reference to the database service
+        const db = firebase.database();
 
         // DOM elements
         const noteTextarea = document.getElementById('note');
@@ -140,48 +114,51 @@
         historyButton.addEventListener('click', viewHistory);
         backButton.addEventListener('click', backToNote);
 
-        // Function to save a note to Firestore
+        // Function to save a note to Firebase Realtime Database
         function saveNote() {
             const noteText = noteTextarea.value.trim();
             if (noteText === '') {
                 return;
             }
 
-            // Add a new document with a generated ID to the "notes" collection
-            db.collection("notes").add({
+            const notesRef = db.ref('notes');
+            const newNoteRef = notesRef.push();
+            newNoteRef.set({
                 text: noteText,
                 date: new Date().toLocaleString()
             })
-            .then((docRef) => {
-                console.log("Note added with ID: ", docRef.id);
+            .then(() => {
+                console.log('Note saved successfully!');
                 alert('Note saved successfully!');
                 noteTextarea.value = ''; // Clear textarea after saving
             })
             .catch((error) => {
-                console.error("Error adding note: ", error);
+                console.error('Error saving note: ', error);
                 alert('Failed to save note. Please try again.');
             });
         }
 
-        // Function to retrieve and display notes from Firestore
+        // Function to retrieve and display notes from Firebase Realtime Database
         function viewHistory() {
             mainContainer.style.display = 'none';
             historyContainer.style.display = 'block';
             notesList.innerHTML = '';
 
-            // Get all notes from the "notes" collection
-            db.collection("notes").get().then((querySnapshot) => {
-                if (querySnapshot.empty) {
+            const notesRef = db.ref('notes');
+            notesRef.once('value')
+            .then((snapshot) => {
+                const notes = snapshot.val();
+                if (!notes) {
                     notesList.innerHTML = '<p>No notes saved.</p>';
                     return;
                 }
 
-                querySnapshot.forEach((doc) => {
-                    const note = doc.data();
+                Object.keys(notes).forEach((key) => {
+                    const note = notes[key];
                     const noteDiv = document.createElement('div');
                     noteDiv.classList.add('note');
                     noteDiv.innerHTML = `
-                        <h2>Note ${doc.id}</h2>
+                        <h2>Note ${key}</h2>
                         <p>${note.text}</p>
                         <small>${note.date}</small>
                         <hr>
@@ -190,7 +167,7 @@
                 });
             })
             .catch((error) => {
-                console.error("Error fetching notes: ", error);
+                console.error('Error fetching notes: ', error);
                 notesList.innerHTML = '<p>Error fetching notes. Please try again later.</p>';
             });
         }
