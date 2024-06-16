@@ -8,28 +8,27 @@
     <style>
         /* Basic CSS styling */
         .container {
-    max-width: 1300px;
-    width: 100%;
-    margin: 20px auto; /* This line centers the container horizontally */
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    height: 650px; /* Set a fixed height for the container */
-    overflow-y: auto; /* Add vertical scrollbar if content exceeds container height */
-}
+            max-width: 1300px;
+            width: 100%;
+            margin: 20px auto; /* This line centers the container horizontally */
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            height: 650px; /* Set a fixed height for the container */
+            overflow-y: auto; /* Add vertical scrollbar if content exceeds container height */
+        }
 
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    background-color: #f5f5f5;
-}
-
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
 
         h1 {
             text-align: center;
@@ -75,8 +74,9 @@ body {
         .editable {
             cursor: pointer;
         }
-        .taskNameDone {
+        .task-done {
             text-decoration: line-through;
+            color: #999;
         }
         .actions button {
             padding: 5px 10px;
@@ -86,22 +86,19 @@ body {
             cursor: pointer;
         }
         .actions button.done {
-    background-color: #5cb85c; /* Green color for done button */
-    color: #fff;
-}
-
-.actions button.done:hover {
-    background-color: #4cae4c;
-}
-
-.actions button.undo {
-    background-color: #ffd700; /* Yellow color for undo button */
-    color: #000; /* Text color */
-}
-
-.actions button.undo:hover {
-    background-color: #e6bd09; /* Darker yellow on hover */
-}
+            background-color: #5cb85c; /* Green color for done button */
+            color: #fff;
+        }
+        .actions button.done:hover {
+            background-color: #4cae4c;
+        }
+        .actions button.undo {
+            background-color: #ffd700; /* Yellow color for undo button */
+            color: #000; /* Text color */
+        }
+        .actions button.undo:hover {
+            background-color: #e6bd09; /* Darker yellow on hover */
+        }
         .actions button.delete {
             background-color: #d9534f;
             color: #fff;
@@ -134,25 +131,22 @@ body {
             background-color: #ccc;
         }
         #Overview {
-    font-size: 14px;
-}
-
-#Overview h3 {
-    margin-top: 10px;
-    margin-bottom: 5px;
-    font-size: 18px;
-}
-
-#Overview ul {
-    margin-top: 5px;
-    margin-bottom: 15px;
-    line-height: 1.4;
-}
-
-#Overview p {
-    margin-top: 5px;
-    margin-bottom: 15px;
-}
+            font-size: 14px;
+        }
+        #Overview h3 {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+        #Overview ul {
+            margin-top: 5px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        #Overview p {
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -218,37 +212,66 @@ body {
     </div>
 </div>
 
-<script>
-    // Load team members and tasks from localStorage
-    let teamMembers = JSON.parse(localStorage.getItem('teamMembers')) || [];
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-    // Function to save team members and tasks to localStorage
-    function saveTeamMembers() {
-        localStorage.setItem('teamMembers', JSON.stringify(teamMembers));
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyATte5dS_XTgulAlI-m-XdB_kvO_qr4PmM",
+        authDomain: "dashboard-1c680.firebaseapp.com",
+        projectId: "dashboard-1c680",
+        storageBucket: "dashboard-1c680.appspot.com",
+        messagingSenderId: "1053490324341",
+        appId: "1:1053490324341:web:32438d7f8ec6efeb6cf63e",
+        measurementId: "G-WJWHZ571YW"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let teamMembers = [];
+
+    // Function to load team members from Firestore
+    async function loadTeamMembers() {
+        try {
+            const teamMembersSnapshot = await db.collection('team-members').get();
+            teamMembers = teamMembersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateMemberDropdowns();
+        } catch (error) {
+            console.error("Error loading team members: ", error);
+        }
     }
 
-    // Function to add a new team member
-    document.getElementById("addMemberForm").addEventListener("submit", function(event) {
+    // Function to save a new team member to Firestore
+    document.getElementById("addMemberForm").addEventListener("submit", async function(event) {
         event.preventDefault();
         const memberName = document.getElementById("memberName").value.trim();
         if (memberName !== "") {
-            teamMembers.push({ name: memberName, tasks: [] });
-            updateMemberDropdowns();
-            saveTeamMembers();
-            document.getElementById("memberName").value = "";
+            const createdAt = new Date().toISOString();
+            try {
+                await db.collection('team-members').add({ name: memberName, created_at: createdAt });
+                console.log("Member added successfully");
+                loadTeamMembers();
+                document.getElementById("memberName").value = "";
+            } catch (error) {
+                console.error("Error adding member: ", error);
+            }
         }
     });
 
-    // Function to delete a team member
-    document.getElementById("deleteMemberForm").addEventListener("submit", function(event) {
+    // Function to delete a team member from Firestore
+    document.getElementById("deleteMemberForm").addEventListener("submit", async function(event) {
         event.preventDefault();
-        const selectedMember = document.getElementById("selectMemberToDelete").value;
-        if (selectedMember !== "") {
-            const index = teamMembers.findIndex(member => member.name === selectedMember);
-            if (index !== -1) {
-                teamMembers.splice(index, 1);
-                updateMemberDropdowns();
-                saveTeamMembers();
+        const selectedMemberId = document.getElementById("selectMemberToDelete").value;
+        if (selectedMemberId !== "") {
+            try {
+                await db.collection('team-members').doc(selectedMemberId).delete();
+                console.log("Member deleted successfully");
+                loadTeamMembers();
+            } catch (error) {
+                console.error("Error deleting member: ", error);
             }
         }
     });
@@ -261,98 +284,125 @@ body {
         selectMemberToDeleteDropdown.innerHTML = "";
         teamMembers.forEach(member => {
             const option = document.createElement("option");
-            option.value = member.name;
+            option.value = member.id;
             option.textContent = member.name;
             selectMemberDropdown.appendChild(option);
             const deleteOption = document.createElement("option");
-            deleteOption.value = member.name;
+            deleteOption.value = member.id;
             deleteOption.textContent = member.name;
             selectMemberToDeleteDropdown.appendChild(deleteOption);
         });
+        // Load tasks for the selected member when switching to Tasks tab
+        const selectedMemberId = document.getElementById("selectMember").value;
+        loadTasks(selectedMemberId);
     }
 
-    // Function to add a task to the selected team member
-    document.getElementById("addTaskForm").addEventListener("submit", function(event) {
+    // Function to add a task to Firestore
+    document.getElementById("addTaskForm").addEventListener("submit", async function(event) {
         event.preventDefault();
-        const selectedMember = document.getElementById("selectMember").value;
+        const selectedMemberId = document.getElementById("selectMember").value;
         const taskName = document.getElementById("taskName").value.trim();
         if (taskName !== "") {
-            const member = teamMembers.find(member => member.name === selectedMember);
-            if (member) {
-                const now = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }); // Get current date in preferred format and timezone
-                member.tasks.unshift({ name: taskName, createdAt: now, deadline: '', comments: '', done: false }); // Add task to the beginning of the array
-                updateTaskList(member);
-                saveTeamMembers();
+            const createdAt = new Date().toISOString();
+            try {
+                await db.collection('tasks').add({ task_description: taskName, assigned_to: selectedMemberId, created_at: createdAt });
+                console.log("Task added successfully");
+                loadTasks(selectedMemberId);
                 document.getElementById("taskName").value = "";
+            } catch (error) {
+                console.error("Error adding task: ", error);
             }
         }
     });
 
-    // Function to update the task list for the selected team member
-    function updateTaskList(member) {
-    const taskListBody = document.querySelector("#taskList tbody");
-    taskListBody.innerHTML = "";
-    member.tasks.slice().reverse().forEach((task, index) => { // Reverse the order of tasks
-        const taskRow = document.createElement("tr");
-        taskRow.innerHTML = `
-            <td class="${task.done ? 'taskNameDone' : ''}">${task.name}</td>
-            <td>${task.createdAt}</td>
-            <td class="editable" contenteditable>${task.deadline}</td>
-            <td class="editable" contenteditable>${task.comments}</td>
-            <td class="actions">
-                <button class="done" onclick="toggleTaskStatus(${index})">${task.done ? 'Undo' : 'Done'}</button>
-                <button class="delete" onclick="deleteTask(${index})">Delete</button>
-            </td>
-        `;
-        taskListBody.appendChild(taskRow);
-    });
-}
-
-    // Function to toggle task status
-    function toggleTaskStatus(index) {
-        const selectedMember = document.getElementById("selectMember").value;
-        const member = teamMembers.find(member => member.name === selectedMember);
-        if (member && member.tasks[index]) {
-            member.tasks[index].done = !member.tasks[index].done;
-            updateTaskList(member);
-            saveTeamMembers();
+    // Function to load tasks for the selected team member from Firestore
+    async function loadTasks(memberId) {
+        try {
+            const tasksSnapshot = await db.collection('tasks').where('assigned_to', '==', memberId).get();
+            const tasks = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateTaskList(tasks);
+        } catch (error) {
+            console.error("Error loading tasks: ", error);
         }
     }
 
-    // Function to delete a task
-    function deleteTask(index) {
-        const selectedMember = document.getElementById("selectMember").value;
-        const member = teamMembers.find(member => member.name === selectedMember);
-        if (member && member.tasks[index]) {
-            member.tasks.splice(index, 1);
-            updateTaskList(member);
-            saveTeamMembers();
+    // Function to update the task list
+    function updateTaskList(tasks) {
+        const taskListBody = document.querySelector("#taskList tbody");
+        taskListBody.innerHTML = "";
+        tasks.forEach((task) => {
+            const taskRow = document.createElement("tr");
+            const taskClass = task.done ? 'task-done' : '';
+            taskRow.innerHTML = `
+                <td class="${taskClass}">${task.task_description}</td>
+                <td>${new Date(task.created_at).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}</td>
+                <td class="editable" contenteditable>${task.deadline || ''}</td>
+                <td class="editable" contenteditable>${task.comments || ''}</td>
+                <td class="actions">
+                    <button class="done" onclick="toggleTaskStatus('${task.id}')">${task.done ? 'Undo' : 'Done'}</button>
+                    <button class="delete" onclick="deleteTask('${task.id}')">Delete</button>
+                </td>
+            `;
+            taskListBody.appendChild(taskRow);
+        });
+    }
+
+    // Function to toggle task status in Firestore
+    async function toggleTaskStatus(taskId) {
+        try {
+            const taskDoc = await db.collection('tasks').doc(taskId).get();
+            const taskData = taskDoc.data();
+            await db.collection('tasks').doc(taskId).update({ done: !taskData.done });
+            const selectedMemberId = document.getElementById("selectMember").value;
+            loadTasks(selectedMemberId);
+        } catch (error) {
+            console.error("Error toggling task status: ", error);
         }
     }
 
-    // Populate dropdown and task list on page load
-    window.onload = function() {
-        updateMemberDropdowns();
-        const selectedMember = document.getElementById("selectMember").value;
-        const member = teamMembers.find(member => member.name === selectedMember);
-        if (member) {
-            updateTaskList(member);
+    // Function to delete a task from Firestore
+    async function deleteTask(taskId) {
+        try {
+            await db.collection('tasks').doc(taskId).delete();
+            const selectedMemberId = document.getElementById("selectMember").value;
+            loadTasks(selectedMemberId);
+        } catch (error) {
+            console.error("Error deleting task: ", error);
         }
+    }
 
-        // Trigger click event on the Overview tab button
-        document.querySelector(".tablinks:nth-child(3)").click();
-    };
-
-    // Add event listener for selecting team member
-    document.getElementById("selectMember").addEventListener("change", function() {
-        const selectedMember = document.getElementById("selectMember").value;
-        const member = teamMembers.find(member => member.name === selectedMember);
-        if (member) {
-            updateTaskList(member);
+    // Function to update the Overview tab
+    async function updateOverview() {
+        const overviewTab = document.getElementById("Overview");
+        overviewTab.innerHTML = ""; // Clear existing content
+        try {
+            const teamMembersSnapshot = await db.collection('team-members').get();
+            teamMembersSnapshot.forEach(async memberDoc => {
+                const member = memberDoc.data();
+                const tasksSnapshot = await db.collection('tasks').where('assigned_to', '==', memberDoc.id).get();
+                const openTasks = tasksSnapshot.docs.filter(taskDoc => !taskDoc.data().done);
+                const memberTasks = document.createElement("div");
+                memberTasks.innerHTML = `<h3>${member.name}:</h3>`;
+                if (openTasks.length > 0) {
+                    const taskList = document.createElement("ul");
+                    openTasks.forEach(taskDoc => {
+                        const task = taskDoc.data();
+                        const taskItem = document.createElement("li");
+                        taskItem.textContent = task.task_description;
+                        taskList.appendChild(taskItem);
+                    });
+                    memberTasks.appendChild(taskList);
+                } else {
+                    memberTasks.innerHTML += `<p>No open tasks</p>`;
+                }
+                overviewTab.appendChild(memberTasks);
+            });
+        } catch (error) {
+            console.error("Error updating overview: ", error);
         }
-    });
+    }
 
-    // Function to open tab
+    // Function to open a tab
     function openTab(evt, tabName) {
         var i, tabcontent, tablinks;
         tabcontent = document.getElementsByClassName("tabcontent");
@@ -367,42 +417,21 @@ body {
         evt.currentTarget.className += " active";
         if (tabName === 'Overview') {
             updateOverview();
+        } else if (tabName === 'Tasks') {
+            const selectedMemberId = document.getElementById("selectMember").value;
+            loadTasks(selectedMemberId);
         }
     }
 
-// Function to update overview tab
-// Function to update overview tab
-function updateOverview() {
-    const overviewTab = document.getElementById("Overview");
-    overviewTab.innerHTML = ""; // Clear existing content
+    // Populate dropdowns and task list on page load
+    window.onload = function() {
+        loadTeamMembers();
+        document.querySelector(".tablinks:nth-child(3)").click();
+    };
 
-    // Iterate over all team members
-    teamMembers.forEach(member => {
-        const openTasks = member.tasks.filter(task => !task.done);
-        const memberTasks = document.createElement("div");
-        memberTasks.innerHTML = `<h3>${member.name}:</h3>`;
-
-        // If the member has open tasks, display them in ascending order
-        if (openTasks.length > 0) {
-            const taskList = document.createElement("ul");
-            openTasks.reverse().forEach(task => { // Reverse the order for ascending display
-                const taskItem = document.createElement("li");
-                taskItem.textContent = task.name;
-                taskList.appendChild(taskItem);
-            });
-            memberTasks.appendChild(taskList);
-        } else {
-            // If the member doesn't have open tasks, display a message
-            memberTasks.innerHTML += `<p>No open tasks</p>`;
-        }
-
-        overviewTab.appendChild(memberTasks);
+    // Add event listener for selecting team member
+    document.getElementById("selectMember").addEventListener("change", function() {
+        const selectedMemberId = document.getElementById("selectMember").value;
+        loadTasks(selectedMemberId);
     });
-}
-
-
-
 </script>
-
-</body>
-</html>
