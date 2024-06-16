@@ -130,6 +130,7 @@
             <button id="newButton">New Note</button>
             <button id="historyButton">View History</button>
             <button id="clearButton">Clear</button>
+            <button id="beautifyJsonButton">Beautify JSON</button>
             <div id="messageArea"></div>
         </div>
     </div>
@@ -238,6 +239,7 @@
         document.getElementById('historyButton').addEventListener('click', viewHistory);
         document.getElementById('clearButton').addEventListener('click', clearNote);
         document.getElementById('backToNotesButton').addEventListener('click', backToNotes);
+        document.getElementById('beautifyJsonButton').addEventListener('click', beautifyJson);
         document.addEventListener('keydown', function(event) {
             if (event.metaKey && event.key === 's') {
             event.preventDefault(); // Prevent default behavior (like focusing on the URL bar)
@@ -276,6 +278,18 @@
     
         function newNote() {
             saveNote();
+        }
+
+        function beautifyJson() {
+            const noteText = document.getElementById('note').value.trim();
+            try {
+                const parsedJson = JSON.parse(noteText);
+                const beautifiedJson = JSON.stringify(parsedJson, null, 2);
+                document.getElementById('note').value = beautifiedJson;
+                showMessage('JSON beautified successfully!', true);
+            } catch (error) {
+                showMessage('Invalid JSON format!', false);
+            }
         }
     
         function showMessage(message, isSuccess) {
