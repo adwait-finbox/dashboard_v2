@@ -32,7 +32,7 @@
             position: relative;
         }
         textarea {
-            width: 1150px;
+            width: 100%;
             height: 600px;
             padding: 10px;
             border: 1px solid #ccc;
@@ -45,7 +45,7 @@
             flex-direction: column;
             margin-left: 20px;
             padding: 10px;
-            width: 100px;
+            width: 130px;
         }
         button {
             padding: 10px 15px;
@@ -56,7 +56,6 @@
             color: white;
             cursor: pointer;
             font-size: 14px;
-            width: 130px;
         }
         button:hover {
             background-color: #0056b3;
@@ -128,6 +127,8 @@
             overflow: auto;
             border-radius: 5px;
             background: #f5f5f5; /* Adjust background color */
+            color: #333; /* Adjust text color */
+            border: 1px solid #ddd; /* Add border for clarity */
         }
         
         /* Adjust Prism.js code block language indicator */
@@ -194,11 +195,12 @@
         .token.italic {
             font-style: italic;
         }
-            </style>
+    </style>
 </head>
 <body>
     <div id="loginContainer" class="container">
         <form id="loginForm">
+            <!-- Add your login form elements here -->
         </form>
         <button id="githubSignInButton">Sign in with GitHub</button>
         <p id="loginError" class="error"></p>
@@ -238,13 +240,12 @@
         </div>
     </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-
-    <script>
-        // Initialize Firebase
+<script>
+    // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyATte5dS_XTgulAlI-m-XdB_kvO_qr4PmM",
             authDomain: "dashboard-1c680.firebaseapp.com",
@@ -253,225 +254,222 @@
             messagingSenderId: "1053490324341",
             appId: "1:1053490324341",
             measurementId: "G-WJWHZ571YW"
-        };
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        // GitHub sign-in button
-        const githubSignInButton = document.getElementById('githubSignInButton');
+    // GitHub sign-in button
+    const githubSignInButton = document.getElementById('githubSignInButton');
 
-        githubSignInButton.addEventListener('click', () => {
-            const provider = new firebase.auth.GithubAuthProvider();
-            firebase.auth().signInWithPopup(provider)
-            .then(function(result) {
-                let token = result.credential.accessToken;
-                let user = result.user;
-                console.log(token)
-                console.log(user)
-            }).catch(function(error) {
-                var errorCode = error.code;
-                var errorMessage = error.message;
-                console.log(error.code)
-                console.log(error.message)
-            });
+    githubSignInButton.addEventListener('click', () => {
+        const provider = new firebase.auth.GithubAuthProvider();
+        firebase.auth().signInWithPopup(provider)
+        .then(function(result) {
+            let token = result.credential.accessToken;
+            let user = result.user;
+            console.log(token);
+            console.log(user);
+        }).catch(function(error) {
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            console.log(errorCode);
+            console.log(errorMessage);
         });
+    });
 
-        // Event listener for login form submission
-        document.getElementById('loginForm').addEventListener('submit', e => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    showApp();
-                })
-                .catch(error => {
-                    document.getElementById('loginError').textContent = error.message;
-                });
-        });
-
-        // Check authentication state
-        auth.onAuthStateChanged(user => {
-            if (user) {
+    // Event listener for login form submission
+    document.getElementById('loginForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => {
                 showApp();
-            } else {
-                showLogin();
-            }
-        });
+            })
+            .catch(error => {
+                document.getElementById('loginError').textContent = error.message;
+            });
+    });
 
-        // Function to show the main application UI
-        function showApp() {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('mainContainer').style.display = 'flex';
-            document.getElementById('historyContainer').style.display = 'none';
+    // Check authentication state
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            showApp();
+        } else {
+            showLogin();
         }
+    });
 
-        // Function to show the login form
-        function showLogin() {
-            document.getElementById('loginContainer').style.display = 'flex';
-            document.getElementById('mainContainer').style.display = 'none';
-            document.getElementById('historyContainer').style.display = 'none';
-        }
-    
-        // Event listeners
-        document.getElementById('saveButton').addEventListener('click', saveNote);
-        document.getElementById('newButton').addEventListener('click', newNote);
-        document.getElementById('historyButton').addEventListener('click', viewHistory);
-        document.getElementById('clearButton').addEventListener('click', clearNote);
-        document.getElementById('backToNotesButton').addEventListener('click', backToNotes);
-        document.getElementById('beautifyJsonButton').addEventListener('click', beautifyJson);
-        document.addEventListener('keydown', function(event) {
-            if (event.metaKey && event.key === 's') {
+    // Function to show the main application UI
+    function showApp() {
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'flex';
+        document.getElementById('historyContainer').style.display = 'none';
+    }
+
+    // Function to show the login form
+    function showLogin() {
+        document.getElementById('loginContainer').style.display = 'flex';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.getElementById('historyContainer').style.display = 'none';
+    }
+
+    // Event listeners
+    document.getElementById('saveButton').addEventListener('click', saveNote);
+    document.getElementById('newButton').addEventListener('click', newNote);
+    document.getElementById('historyButton').addEventListener('click', viewHistory);
+    document.getElementById('clearButton').addEventListener('click', clearNote);
+    document.getElementById('backToNotesButton').addEventListener('click', backToNotes);
+    document.getElementById('beautifyJsonButton').addEventListener('click', beautifyJson);
+    document.addEventListener('keydown', function(event) {
+        if (event.metaKey && event.key === 's') {
             event.preventDefault(); // Prevent default behavior (like focusing on the URL bar)
             saveNote();
-            }
-        });
-        document.addEventListener('keydown', function(event) {
-            if (event.ctrlKey && event.key === 'z') {
-            clearNote();
-            }
-        });
-    
-        // Functions
-        function saveNote() {
-            const noteText = document.getElementById('note').value.trim();
-            if (noteText === '') {
-                return;
-            }
-    
-            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-    
-            db.collection('notes').add({
-                text: noteText,
-                createdAt: timestamp
-            })
-            .then(() => {
-                console.log("Note successfully saved to Firestore!");
-                showMessage('Note saved successfully!', true);
-                document.getElementById('note').value = '';
-            })
-            .catch((error) => {
-                console.error("Error saving note: ", error);
-                showMessage('Failed to save note. Please try again.', false);
-            });
         }
-    
-        function newNote() {
-            saveNote();
+    });
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.key === 'z') {
+            clearNote();
+        }
+    });
+
+    // Functions
+    function saveNote() {
+        const noteText = document.getElementById('note').value.trim();
+        if (noteText === '') {
+            return;
         }
 
-        function beautifyJson() {
-            const noteText = document.getElementById('note').value.trim();
-            try {
-                const parsedJson = JSON.parse(noteText);
-                const beautifiedJson = JSON.stringify(parsedJson, null, 2);
-                document.getElementById('note').value = beautifiedJson;
-        
-                // Apply syntax highlighting with Prism.js
-                Prism.highlightAll();
-        
-                showMessage('JSON beautified successfully!', true);
-            } catch (error) {
-                showMessage('Invalid JSON format!', false);
+        const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+        db.collection('notes').add({
+            text: noteText,
+            createdAt: timestamp
+        })
+        .then(() => {
+            console.log("Note successfully saved to Firestore!");
+            showMessage('Note saved successfully!', true);
+            document.getElementById('note').value = '';
+        })
+        .catch((error) => {
+            console.error("Error saving note: ", error);
+            showMessage('Failed to save note. Please try again.', false);
+        });
+    }
+
+    function newNote() {
+        saveNote();
+    }
+
+    function beautifyJson() {
+        const noteText = document.getElementById('note').value.trim();
+        try {
+            const parsedJson = JSON.parse(noteText);
+            const beautifiedJson = JSON.stringify(parsedJson, null, 2);
+            document.getElementById('note').value = beautifiedJson;
+
+            // Apply syntax highlighting with Prism.js
+            Prism.highlightAll();
+
+            showMessage('JSON beautified successfully!', true);
+        } catch (error) {
+            showMessage('Invalid JSON format!', false);
+        }
+    }
+
+    function showMessage(message, isSuccess) {
+        const messageArea = document.getElementById('messageArea');
+        messageArea.innerHTML = `<p class="${isSuccess ? 'success' : 'error'}">${message}</p>`;
+        // Clear message after some time (optional)
+        setTimeout(() => {
+            messageArea.innerHTML = '';
+        }, 3000); // Clear message after 3 seconds
+    }
+
+    function viewHistory() {
+        document.getElementById('mainContainer').style.display = 'none';
+        document.getElementById('historyContainer').style.display = 'flex';
+
+        const notesTableBody = document.getElementById('notesTableBody');
+        notesTableBody.innerHTML = '';
+
+        db.collection('notes').orderBy('createdAt', 'desc').get()
+        .then((querySnapshot) => {
+            if (querySnapshot.empty) {
+                notesTableBody.innerHTML = '<tr><td colspan="5">No notes saved.</td></tr>';
+                return;
             }
-        }
-    
-        function showMessage(message, isSuccess) {
-            const messageArea = document.getElementById('messageArea');
-            messageArea.innerHTML = `<p class="${isSuccess ? 'success' : 'error'}">${message}</p>`;
-            // Clear message after some time (optional)
-            setTimeout(() => {
-                messageArea.innerHTML = '';
-            }, 3000); // Clear message after 3 seconds
-        }
-    
-        function viewHistory() {
-            document.getElementById('mainContainer').style.display = 'none';
-            document.getElementById('historyContainer').style.display = 'flex';
-    
-            const notesTableBody = document.getElementById('notesTableBody');
-            notesTableBody.innerHTML = '';
-    
-            db.collection('notes').orderBy('createdAt', 'desc').get()
-            .then((querySnapshot) => {
-                if (querySnapshot.empty) {
-                    notesTableBody.innerHTML = '<tr><td colspan="5">No notes saved.</td></tr>';
-                    return;
-                }
-    
-                querySnapshot.forEach((doc) => {
-                    const note = doc.data();
-                    const row = document.createElement('tr');
-    
-                    // Note ID
-                    const noteIdCell = document.createElement('td');
-                    noteIdCell.textContent = doc.id;
-                    row.appendChild(noteIdCell);
-    
-                    // Preview (show first 50 characters)
-                    const previewCell = document.createElement('td');
-                    previewCell.textContent = note.text.length > 50 ? note.text.substring(0, 50) + '...' : note.text;
-                    row.appendChild(previewCell);
-    
-                    // Created At
-                    const createdAtCell = document.createElement('td');
-                    createdAtCell.textContent = note.createdAt.toDate().toLocaleString();
-                    row.appendChild(createdAtCell);
-    
-                    // View Note Button
-                    const viewButtonCell = document.createElement('td');
-                    const viewButton = document.createElement('button');
-                    viewButton.textContent = 'View';
-                    viewButton.addEventListener('click', () => {
-                        // Fetch the note text and display it in the main notes container
-                        document.getElementById('note').value = note.text;
-                        backToNotes(); // Return to main notes page
-                    });
-                    viewButtonCell.appendChild(viewButton);
-                    row.appendChild(viewButtonCell);
-    
-                    // Delete Note Button
-                    const deleteButtonCell = document.createElement('td');
-                    const deleteButton = document.createElement('button');
-                    deleteButton.textContent = 'Delete';
-                    deleteButton.addEventListener('click', () => {
-                        // Delete the note from Firestore
-                        db.collection('notes').doc(doc.id).delete()
-                        .then(() => {
-                            console.log("Note successfully deleted from Firestore!");
-                            showMessage('Note deleted successfully!', true);
-                            // Optionally, refresh the history view
-                            viewHistory();
-                        })
-                        .catch((error) => {
-                            console.error("Error deleting note: ", error);
-                            showMessage('Failed to delete note. Please try again.', false);
-                        });
-                    });
-                    deleteButtonCell.appendChild(deleteButton);
-                    row.appendChild(deleteButtonCell);
-    
-                    notesTableBody.appendChild(row);
+
+            querySnapshot.forEach((doc) => {
+                const note = doc.data();
+                const row = document.createElement('tr');
+
+                // Note ID
+                const noteIdCell = document.createElement('td');
+                noteIdCell.textContent = doc.id;
+                row.appendChild(noteIdCell);
+
+                // Preview (show first 50 characters)
+                const previewCell = document.createElement('td');
+                previewCell.textContent = note.text.length > 50 ? note.text.substring(0, 50) + '...' : note.text;
+                row.appendChild(previewCell);
+
+                // Created At
+                const createdAtCell = document.createElement('td');
+                createdAtCell.textContent = note.createdAt.toDate().toLocaleString();
+                row.appendChild(createdAtCell);
+
+                // View Note Button
+                const viewButtonCell = document.createElement('td');
+                const viewButton = document.createElement('button');
+                viewButton.textContent = 'View';
+                viewButton.addEventListener('click', () => {
+                    // Fetch the note text and display it in the main notes container
+                    document.getElementById('note').value = note.text;
+                    backToNotes(); // Return to main notes page
                 });
-            })
-            .catch((error) => {
-                console.error("Error retrieving notes: ", error);
-                notesTableBody.innerHTML = '<tr><td colspan="5">Failed to fetch notes.</td></tr>';
+                viewButtonCell.appendChild(viewButton);
+                row.appendChild(viewButtonCell);
+
+                // Delete Note Button
+                const deleteButtonCell = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.addEventListener('click', () => {
+                    // Delete the note from Firestore
+                    db.collection('notes').doc(doc.id).delete()
+                    .then(() => {
+                        console.log("Note successfully deleted from Firestore!");
+                        showMessage('Note deleted successfully!', true);
+                        // Optionally, refresh the history view
+                        viewHistory();
+                    })
+                    .catch((error) => {
+                        console.error("Error deleting note: ", error);
+                        showMessage('Failed to delete note. Please try again.', false);
+                    });
+                });
+                deleteButtonCell.appendChild(deleteButton);
+                row.appendChild(deleteButtonCell);
+
+                notesTableBody.appendChild(row);
             });
-        }
-    
-        function clearNote() {
-            document.getElementById('note').value = ''; // Clears the textarea
-        }
-    
-        function backToNotes() {
-            document.getElementById('historyContainer').style.display = 'none';
-            document.getElementById('mainContainer').style.display = 'flex';
-        }
-    </script>
-    </body>
-    </html>
-    
+        })
+        .catch((error) => {
+            console.error("Error retrieving notes: ", error);
+            notesTableBody.innerHTML = '<tr><td colspan="5">Failed to fetch notes.</td></tr>';
+        });
+    }
+
+    function clearNote() {
+        document.getElementById('note').value = ''; // Clears the textarea
+    }
+
+    function backToNotes() {
+        document.getElementById('historyContainer').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'flex';
+    }
+</script>
