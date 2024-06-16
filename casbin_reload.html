@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casbin Reload</title>
+    <link rel="icon" type="image/x-icon" href="reload.ico">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        select {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #tokenDisplay {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        #apiResponse1,
+        #apiResponse2 {
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Casbin Reload Utility</h2>
+        <select id="envSelect">
+            <option value="https://lendingapis.finbox.in">Prod</option>
+            <option value="https://lendinguat.finbox.in">UAT1</option>
+            <option value="https://lendinguat2.finbox.in">UAT2</option>
+            <option value="https://lendinguat3.finbox.in">UAT3</option>
+            <option value="https://lendinguat4.finbox.in">UAT4</option>
+            <option value="https://lendinguat5.finbox.in">UAT5</option>
+            <option value="https://lendinguat6.finbox.in">UAT6</option>
+            <option value="https://lendinguat7.finbox.in">UAT7</option>
+            <option value="https://lendinguat8.finbox.in">UAT8</option>
+            <option value="https://lendinguat9.finbox.in">UAT9</option>
+            <option value="https://lendinguat10.finbox.in">UAT10</option>
+            <option value="https://lendinguat11.finbox.in">UAT11</option>
+            <option value="https://lendinguat12.finbox.in">UAT12</option>
+            <option value="https://lendingdev.finbox.in">DEV1</option>
+            <option value="https://lendingdev2.finbox.in">DEV2</option>
+            <option value="https://lendingdev3.finbox.in">DEV3</option>
+            <option value="https://lendingdev4.finbox.in">DEV4</option>
+            <option value="https://lendingdev5.finbox.in">DEV5</option>
+            <option value="https://lendingdev6.finbox.in">DEV6</option>
+        </select>
+        <button onclick="reloadCasbin()">Reload Casbin</button>
+        <div id="tokenDisplay"></div>
+        <div id="apiResponse1"></div>
+        <div id="apiResponse2"></div>
+    </div>
+
+    <script>
+        function reloadCasbin() {
+            var selectedEnv = document.getElementById("envSelect").value;
+            var baseUrl = selectedEnv;
+            var apiUrl = baseUrl + "/v1/masterDashboard/login"; 
+
+            
+            var postData = {
+                email: "asd.kulkarni@gmail.com",
+                password: "Finbox@123"
+            };
+
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", apiUrl, true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.status) {
+                            var token = response.data.token;
+                            document.getElementById("tokenDisplay").innerText = "Token: " + token;
+
+                            
+                            callSecondAPI(baseUrl, token);
+
+                            
+                            callThirdAPI(baseUrl, token);
+                        } else {
+                            document.getElementById("tokenDisplay").innerText = "Token Retrieval failed";
+                        }
+                    } else {
+                        console.error("API call failed for environment: " + selectedEnv);
+                        console.error("Error:", xhr.responseText);
+                        
+                    }
+                }
+            };
+            xhr.send(JSON.stringify(postData));
+        }
+
+        function callSecondAPI(baseUrl, token) {
+            var apiUrl = baseUrl + "/v1/masterDashboard/rbac/reloadMDCasbinPolicy";
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", apiUrl, true);
+            xhr.setRequestHeader("page-header", "Internal Page");
+            xhr.setRequestHeader("token", token);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        document.getElementById("apiResponse1").innerText = "Response 1: " + response.data.message;
+                    } else {
+                        console.error("API call failed for second endpoint");
+                        console.error("Error:", xhr.responseText);
+                        
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+        function callThirdAPI(baseUrl, token) {
+            var apiUrl = baseUrl + "/v1/masterDashboard/rbac/reloadLDCasbinPolicy";
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", apiUrl, true);
+            xhr.setRequestHeader("page-header", "Internal Page");
+            xhr.setRequestHeader("token", token);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        document.getElementById("apiResponse2").innerText = "Response 2: " + response.data.message;
+                    } else {
+                        console.error("API call failed for third endpoint");
+                        console.error("Error:", xhr.responseText);
+                        
+                    }
+                }
+            };
+            xhr.send();
+        }
+    </script>
+</body>
+</html>
