@@ -239,7 +239,7 @@
         document.getElementById('clearButton').addEventListener('click', clearNote);
         document.getElementById('backToNotesButton').addEventListener('click', backToNotes);
         document.addEventListener('keydown', function(event) {
-            if (event.metaKey && event.key === 'Space') {
+            if (event.metaKey && event.key === 's') {
             event.preventDefault(); // Prevent default behavior (like focusing on the URL bar)
             clearNote();
             }
