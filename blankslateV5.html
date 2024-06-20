@@ -119,7 +119,7 @@
         </form>
         <button id="githubSignInButton">Sign in with GitHub</button>
         <button id="googleSignInButton">Sign in with Google</button>
-        <button id="microsoftSignInButton">Sign in with Microsoft</button>
+        <button id="anonymousSignInButton">Continue as Guest</button>
         <p id="loginError" class="error"></p>
     </div>
     
@@ -151,6 +151,7 @@
                     </tr>
                 </thead>
                 <tbody id="notesTableBody">
+                    <!-- Notes will be dynamically added here -->
                 </tbody>
             </table>
         </div>
@@ -198,10 +199,9 @@
             });
         });
 
-        // Microsoft sign-in button
-        document.getElementById('microsoftSignInButton').addEventListener('click', () => {
-            const provider = new firebase.auth.OAuthProvider('microsoft.com');
-            firebase.auth().signInWithPopup(provider)
+        // Anonymous sign-in button
+        document.getElementById('anonymousSignInButton').addEventListener('click', () => {
+            firebase.auth().signInAnonymously()
             .then(result => {
                 showApp();
             }).catch(error => {
@@ -264,10 +264,14 @@
                 document.getElementById('messageArea').className = 'success';
                 setTimeout(() => {
                     document.getElementById('messageArea').textContent = '';
-                }, 2000);
+                }, 3000);
+                document.getElementById('note').value = '';
             }).catch(error => {
-                document.getElementById('messageArea').textContent = 'Error saving note: ' + error.message;
+                document.getElementById('messageArea').textContent = 'Failed to save note. Please try again.';
                 document.getElementById('messageArea').className = 'error';
+                setTimeout(() => {
+                    document.getElementById('messageArea').textContent = '';
+                }, 3000);
             });
         }
 
@@ -275,77 +279,104 @@
             document.getElementById('note').value = '';
         }
 
-        function clearNote() {
-            document.getElementById('note').value = '';
-        }
-
         function beautifyJson() {
-            const note = document.getElementById('note').value.trim();
+            const noteText = document.getElementById('note').value.trim();
             try {
-                const beautifiedJson = JSON.stringify(JSON.parse(note), null, 4);
+                const parsedJson = JSON.parse(noteText);
+                const beautifiedJson = JSON.stringify(parsedJson, null, 2);
                 document.getElementById('note').value = beautifiedJson;
+                document.getElementById('messageArea').textContent = 'JSON beautified successfully!';
+                document.getElementById('messageArea').className = 'success';
+                setTimeout(() => {
+                    document.getElementById('messageArea').textContent = '';
+                }, 3000);
             } catch (error) {
-                document.getElementById('messageArea').textContent = 'Invalid JSON!';
+                document.getElementById('messageArea').textContent = 'Invalid JSON format!';
                 document.getElementById('messageArea').className = 'error';
                 setTimeout(() => {
                     document.getElementById('messageArea').textContent = '';
-                }, 2000);
+                }, 3000);
             }
         }
 
         function viewHistory() {
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('historyContainer').style.display = 'flex';
+
+            const notesTableBody = document.getElementById('notesTableBody');
+            notesTableBody.innerHTML = '';
             const userId = firebase.auth().currentUser.uid;
+
             db.collection('users').doc(userId).collection('notes').orderBy('createdAt', 'desc').get()
             .then(querySnapshot => {
-                const notesTableBody = document.getElementById('notesTableBody');
-                notesTableBody.innerHTML = '';
+                if (querySnapshot.empty) {
+                    notesTableBody.innerHTML = '<tr><td colspan="5">No notes saved.</td></tr>';
+                    return;
+                }
+
                 querySnapshot.forEach(doc => {
-                    const note = doc.data().note;
-                    const createdAt = doc.data().createdAt.toDate();
+                    const note = doc.data();
                     const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${doc.id}</td>
-                        <td class="expandable">${note}</td>
-                        <td>${createdAt}</td>
-                        <td><button onclick="viewNote('${doc.id}')">View</button></td>
-                        <td><button onclick="deleteNote('${doc.id}')">Delete</button></td>
-                    `;
+
+                    const noteIdCell = document.createElement('td');
+                    noteIdCell.textContent = doc.id;
+                    row.appendChild(noteIdCell);
+
+                    const previewCell = document.createElement('td');
+                    previewCell.textContent = note.note.length > 50 ? note.note.substring(0, 50) + '...' : note.note;
+                    row.appendChild(previewCell);
+
+                    const createdAtCell = document.createElement('td');
+                    createdAtCell.textContent = note.createdAt.toDate().toLocaleString();
+                    row.appendChild(createdAtCell);
+
+                    const viewButtonCell = document.createElement('td');
+                    const viewButton = document.createElement('button');
+                    viewButton.textContent = 'View';
+                    viewButton.addEventListener('click', () => {
+                        document.getElementById('note').value = note.note;
+                        backToNotes();
+                    });
+                    viewButtonCell.appendChild(viewButton);
+                    row.appendChild(viewButtonCell);
+
+                    const deleteButtonCell = document.createElement('td');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => {
+                        db.collection('users').doc(userId).collection('notes').doc(doc.id).delete()
+                        .then(() => {
+                            document.getElementById('messageArea').textContent = 'Note deleted successfully!';
+                            document.getElementById('messageArea').className = 'success';
+                            setTimeout(() => {
+                                document.getElementById('messageArea').textContent = '';
+                            }, 3000);
+                            viewHistory();
+                        }).catch(error => {
+                            document.getElementById('messageArea').textContent = 'Failed to delete note. Please try again.';
+                            document.getElementById('messageArea').className = 'error';
+                            setTimeout(() => {
+                                document.getElementById('messageArea').textContent = '';
+                            }, 3000);
+                        });
+                    });
+                    deleteButtonCell.appendChild(deleteButton);
+                    row.appendChild(deleteButtonCell);
+
                     notesTableBody.appendChild(row);
                 });
-                showHistory();
+            }).catch(error => {
+                notesTableBody.innerHTML = '<tr><td colspan="5">Failed to fetch notes.</td></tr>';
             });
         }
 
-        function showHistory() {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('mainContainer').style.display = 'none';
-            document.getElementById('historyContainer').style.display = 'flex';
+        function clearNote() {
+            document.getElementById('note').value = '';
         }
 
         function backToNotes() {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('mainContainer').style.display = 'flex';
             document.getElementById('historyContainer').style.display = 'none';
-        }
-
-        function viewNote(noteId) {
-            const userId = firebase.auth().currentUser.uid;
-            db.collection('users').doc(userId).collection('notes').doc(noteId).get()
-            .then(doc => {
-                if (doc.exists) {
-                    const note = doc.data().note;
-                    document.getElementById('note').value = note;
-                    backToNotes();
-                }
-            });
-        }
-
-        function deleteNote(noteId) {
-            const userId = firebase.auth().currentUser.uid;
-            db.collection('users').doc(userId).collection('notes').doc(noteId).delete()
-            .then(() => {
-                viewHistory();
-            });
+            document.getElementById('mainContainer').style.display = 'flex';
         }
     </script>
 </body>
