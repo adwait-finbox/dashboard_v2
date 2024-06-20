@@ -42,13 +42,13 @@
             flex-direction: column;
             margin-left: 20px;
             padding: 20px;
-            width: 230px;
+            width: 300px;
         }
         button {
             padding: 10px 15px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             border: 5px;
-            border-radius: 30px;
+            border-radius: 5px;
             background-color: #007BFF;
             color: white;
             cursor: pointer;
@@ -56,7 +56,7 @@
             width: 150px;
         }
         #loginContainer button {
-            margin: 5px 10px; /* Adjust the margin values as needed */
+            margin: 5px 20px; /* Adjust the margin values as needed */
         }
         button:hover {
             background-color: #0056b3;
@@ -120,9 +120,9 @@
     <div id="loginContainer" class="container">
         <form id="loginForm">
         </form>
-        <button id="githubSignInButton">Sign in with GitHub</button>
-        <button id="googleSignInButton">Sign in with Google</button>
-        <button id="anonymousSignInButton">Continue as Guest</button>
+        <button id="githubSignInButton">GitHub SSO</button>
+        <button id="googleSignInButton">Google SSO</button>
+        <button id="anonymousSignInButton">Guest Login</button>
         <p id="loginError" class="error"></p>
     </div>
     
@@ -245,6 +245,7 @@
             if (event.metaKey && event.key === 's') {
                 event.preventDefault();
                 saveNote();
+                clearNote();
             }
         });
         document.addEventListener('keydown', event => {
