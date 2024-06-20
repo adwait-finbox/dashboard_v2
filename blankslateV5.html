@@ -136,6 +136,7 @@
             <button id="historyButton">View History</button>
             <button id="clearButton">Clear</button>
             <button id="beautifyJsonButton">Beautify JSON</button>
+            <button id="logoutButton">Logout</button>
             <div id="messageArea"></div>
         </div>
     </div>
@@ -239,6 +240,7 @@
         document.getElementById('clearButton').addEventListener('click', clearNote);
         document.getElementById('backToNotesButton').addEventListener('click', backToNotes);
         document.getElementById('beautifyJsonButton').addEventListener('click', beautifyJson);
+        document.getElementById('logoutButton').addEventListener('click', logout);
         document.addEventListener('keydown', event => {
             if (event.metaKey && event.key === 's') {
                 event.preventDefault();
@@ -380,6 +382,18 @@
         function backToNotes() {
             document.getElementById('historyContainer').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'flex';
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                showLogin();
+            }).catch(error => {
+                document.getElementById('messageArea').textContent = 'Failed to logout. Please try again.';
+                document.getElementById('messageArea').className = 'error';
+                setTimeout(() => {
+                    document.getElementById('messageArea').textContent = '';
+                }, 3000);
+            });
         }
     </script>
 </body>
